@@ -21,13 +21,19 @@ This project uses GitHub Actions for automated building, testing, and publishing
 
 ### Setup Requirements
 
-To enable automatic NuGet publishing, add a repository secret named `NUGET_API_KEY` containing your NuGet API key:
+To enable automatic NuGet publishing, configure Trusted Publishing on NuGet.org:
 
-1. Go to your repository Settings → Secrets and variables → Actions
-2. Click "New repository secret"
-3. Name: `NUGET_API_KEY`
-4. Value: Your NuGet API key from https://www.nuget.org/account/apikeys
-5. Click "Add secret"
+1. Go to https://www.nuget.org and sign in
+2. Navigate to your package or account settings
+3. Go to "Trusted Publishers" section
+4. Add a new trusted publisher with:
+   - **Package Owner**: Your NuGet.org username or organization
+   - **Repository Owner**: mbparker
+   - **Repository Name**: libsqlite3orm
+   - **Workflow Name**: build-test-publish.yml
+   - **Environment**: (leave empty)
+
+This uses OpenID Connect (OIDC) for secure authentication without requiring API keys.
 
 ### Triggering a Release
 
