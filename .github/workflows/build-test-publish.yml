@@ -1,0 +1,81 @@
+name: Build, Test, and Publish
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [ published ]
+
+jobs:
+  build-and-test:
+    name: Build and Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test --configuration Release --no-build --verbosity normal
+      env:
+        TMPDIR: ${{ runner.temp }}
+        TMP: ${{ runner.temp }}
+        TEMP: ${{ runner.temp }}
+
+    - name: Upload build artifacts (Ubuntu only)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-package
+        path: LibSqlite3Orm/bin/Release/*.nupkg
+
+  publish:
+    name: Publish NuGet Package
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Pack
+      run: dotnet pack LibSqlite3Orm/LibSqlite3Orm.csproj --configuration Release --no-build --output ./nupkg
+
+    - name: Publish to NuGet
+      run: |
+        dotnet nuget push ./nupkg/*.nupkg \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
