@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibSqlite3Orm", "LibSqlite3Orm\LibSqlite3Orm.csproj", "{9580CC0C-9429-4CDF-A6EF-005DCFCC5510}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibSqlite3Orm.UnitTests", "LibSqlite3Orm.UnitTests\LibSqlite3Orm.UnitTests.csproj", "{3B80463D-C4C8-4748-A002-6B41134498C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibSqlite3Orm.IntegrationTests", "LibSqlite3Orm.IntegrationTests\LibSqlite3Orm.IntegrationTests.csproj", "{D735C3B1-5397-4BDF-9913-D5D3C92CF514}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|Any CPU = Release|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9580CC0C-9429-4CDF-A6EF-005DCFCC5510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9580CC0C-9429-4CDF-A6EF-005DCFCC5510}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9580CC0C-9429-4CDF-A6EF-005DCFCC5510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9580CC0C-9429-4CDF-A6EF-005DCFCC5510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B80463D-C4C8-4748-A002-6B41134498C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B80463D-C4C8-4748-A002-6B41134498C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B80463D-C4C8-4748-A002-6B41134498C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B80463D-C4C8-4748-A002-6B41134498C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D735C3B1-5397-4BDF-9913-D5D3C92CF514}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D735C3B1-5397-4BDF-9913-D5D3C92CF514}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D735C3B1-5397-4BDF-9913-D5D3C92CF514}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D735C3B1-5397-4BDF-9913-D5D3C92CF514}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
