@@ -35,6 +35,10 @@ jobs:
 
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal
+      env:
+        TMPDIR: ${{ runner.temp }}
+        TMP: ${{ runner.temp }}
+        TEMP: ${{ runner.temp }}
 
     - name: Upload build artifacts (Ubuntu only)
       if: matrix.os == 'ubuntu-latest'
