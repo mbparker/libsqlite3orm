@@ -407,14 +407,14 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
     
     private void PerformWithoutForeignKeyEnforcement(Action action)
     {
-        Connection.SetForeignKeyEnforcement(false);
+        schemaOrm.ExecuteNonQuery("PRAGMA foreign_keys = off;");
         try
         {
             action?.Invoke();
         }
         finally
         {
-            Connection.SetForeignKeyEnforcement(true);
+            schemaOrm.ExecuteNonQuery("PRAGMA foreign_keys = on;");
         }
     }    
 }
