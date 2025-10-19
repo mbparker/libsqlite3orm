@@ -6,6 +6,7 @@ using Autofac;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.IntegrationTests.TestDataModel;
+using LibSqlite3Orm.Models.Orm.Events;
 
 namespace LibSqlite3Orm.IntegrationTests;
 
@@ -17,46 +18,55 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
     
     public override void SetUp()
     {
-        SeededTagRecords.Clear();
-        SeededLinkRecords.Clear();
-        SeededMasterRecords.Clear();
         base.SetUp();
         DoSeedDatabase();
     }
 
     protected virtual void SeedDatabase()
     {
-        var cnt = Rng.Next(10, 50);
-        for (var i = 0; i < cnt; i++)
+        EnableLogicTracing = false;
+        try
         {
-            var entity = CreateTestEntityMasterWithRandomValues();
-            Orm.Insert(entity);
-            SeededMasterRecords.Add(entity.Id, entity);
-        }
-        
-        cnt = Rng.Next(10, 25);
-        for (var i = 0; i < cnt; i++)
-        {
-            var entity = CreateTestEntityTagWithRandomValues();
-            Orm.Insert(entity);
-            SeededTagRecords.Add(entity.Id, entity);
-        }
-        
-        foreach(var entity in SeededMasterRecords.Values)
-        {
-            cnt = Rng.Next(1, 5);
-            var tagIds = new HashSet<long>();
+            SeededTagRecords.Clear();
+            SeededLinkRecords.Clear();
+            SeededMasterRecords.Clear();
+            
+            var cnt = Rng.Next(10, 50);
             for (var i = 0; i < cnt; i++)
             {
-                var tagId = Rng.Next(1, SeededTagRecords.Count);
-                if (tagIds.Add(tagId))
-                {
-                    var link = new TestEntityTagLink { EntityId = entity.Id, TagId = tagId };
-                    Orm.Insert(link);
-                    SeededLinkRecords.Add(link.Id, link);
-                }
+                var entity = CreateTestEntityMasterWithRandomValues();
+                Orm.Insert(entity);
+                SeededMasterRecords.Add(entity.Id, entity);
             }
 
+            cnt = Rng.Next(10, 25);
+            for (var i = 0; i < cnt; i++)
+            {
+                var entity = CreateTestEntityTagWithRandomValues();
+                Orm.Insert(entity);
+                SeededTagRecords.Add(entity.Id, entity);
+            }
+
+            foreach (var entity in SeededMasterRecords.Values)
+            {
+                cnt = Rng.Next(0, 7);
+                var tagIds = new HashSet<long>();
+                for (var i = 0; i < cnt; i++)
+                {
+                    var tagId = Rng.Next(1, SeededTagRecords.Count);
+                    if (tagIds.Add(tagId))
+                    {
+                        var link = new TestEntityTagLink { EntityId = entity.Id, TagId = tagId };
+                        Orm.Insert(link);
+                        SeededLinkRecords.Add(link.Id, link);
+                    }
+                }
+
+            }
+        }
+        finally
+        {
+            EnableLogicTracing = true;
         }
     }
     
@@ -80,13 +90,20 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
 {
     private IContainer container;
     private ISqliteConnection connection;
+    private IOrmGenerativeLogicTracer logicTracer;
     
     protected Random Rng { get; } =  new(Environment.TickCount);
     protected ISqliteObjectRelationalMapper<TContext> Orm { get; private set; }
+    protected bool EnableLogicTracing { get; set; }
 
     [SetUp]
     public virtual void SetUp()
     {
+        EnableLogicTracing = false;
+        logicTracer = Resolve<IOrmGenerativeLogicTracer>();
+        logicTracer.WhereClauseBuilderVisit += LogicTracerOnWhereClauseBuilderVisit;
+        logicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
+        
         connection = Resolve<Func<ISqliteConnection>>()();
         connection.OpenInMemory();
         
@@ -98,6 +115,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
 
         Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
         Orm.UseConnection(connection.GetReference());
+        EnableLogicTracing = true;
     }
 
     [TearDown]
@@ -105,6 +123,8 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     {
         Orm.Dispose();
         connection.Dispose();
+        logicTracer.WhereClauseBuilderVisit -= LogicTracerOnWhereClauseBuilderVisit;
+        logicTracer.SqlStatementExecuting -= LogicTracerOnSqlStatementExecuting;        
     }
     
     [OneTimeSetUp]
@@ -292,6 +312,18 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         
         return result;
     }
+    
+    private void LogicTracerOnSqlStatementExecuting(object sender, SqlStatementExecutingEventArgs e)
+    {
+        if (EnableLogicTracing)
+            Console.WriteLine(e.Message.Value);
+    }
+
+    private void LogicTracerOnWhereClauseBuilderVisit(object sender, GenerativeLogicTraceEventArgs e)
+    {
+        if (EnableLogicTracing)
+            Console.WriteLine(e.Message.Value);
+    }    
 
     private decimal GenerateRandomDecimal()
     {

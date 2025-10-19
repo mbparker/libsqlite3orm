@@ -23,7 +23,7 @@ public class SqlStatementExecutingEventArgs : GenerativeLogicTraceEventArgs
             var sb = new StringBuilder();
             if (!string.IsNullOrWhiteSpace(sqlStatement))
             {
-                sb.Append($"Executing SQL:  {sqlStatement}\n");
+                sb.Append($"[Executing SQL]  {sqlStatement}\n");
                 sb.Append("\tParameters:\n");
                 if (parameters?.Count > 0)
                 {

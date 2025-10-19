@@ -40,6 +40,9 @@ public static partial class SqliteExternals
 
 	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_config", CallingConvention = CallingConvention.Cdecl)]
 	public static extern SqliteResult Config(SqliteConfigOption option);
+	
+	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_db_config", CallingConvention = CallingConvention.Cdecl)]
+	public static extern SqliteResult DbConfig(IntPtr db, SqliteDbConfigOption option, int value, IntPtr outValue);	
 
 	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_busy_timeout",
 		CallingConvention = CallingConvention.Cdecl)]
@@ -169,5 +172,24 @@ public static partial class SqliteExternals
 	public static string ErrorMsg(IntPtr db)
 	{
 		return Marshal.PtrToStringUTF8(ErrorMsgInternal(db));
+	}
+
+	public static void SetForeignKeyEnforcement(IntPtr db, bool enabled)
+	{
+		var outVal = Marshal.AllocHGlobal(sizeof(int));
+		try
+		{
+			var ret = DbConfig(db, SqliteDbConfigOption.EnableForeignKeys, enabled ? 1 : 0, outVal);
+			if (ret != SqliteResult.OK)
+				throw new SqliteException(ret, "Cannot set foreign key enforcement: Library error.");
+			var realOutVal = Marshal.ReadInt32(outVal);
+			if (realOutVal == 1 != enabled)
+				throw new ApplicationException(
+					"Cannot set foreign key enforcement: Value after change is not as expected.");
+		}
+		finally
+		{
+			Marshal.FreeHGlobal(outVal);
+		}
 	}
 }

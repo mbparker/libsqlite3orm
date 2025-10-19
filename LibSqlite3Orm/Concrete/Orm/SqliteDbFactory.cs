@@ -33,7 +33,6 @@ public class SqliteDbFactory : ISqliteDbFactory
         var indexSynthesizer = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.IndexOps, schema);
         
         var sb = new StringBuilder();
-        sb.AppendLine("PRAGMA foreign_keys = off;");
         sb.AppendLine("SAVEPOINT 'create_db';");
 
         sb.AppendLine("SAVEPOINT 'create_tables';");
@@ -42,7 +41,6 @@ public class SqliteDbFactory : ISqliteDbFactory
             sb.AppendLine(tableSynthesizer.SynthesizeCreate(table.Name));
         }
         sb.AppendLine("RELEASE SAVEPOINT 'create_tables';");
-        sb.AppendLine("PRAGMA foreign_keys = on;");
 
         if (schema.Indexes.Count != 0)
         {

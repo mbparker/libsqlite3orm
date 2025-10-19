@@ -46,7 +46,7 @@ public class SqliteConnection : ISqliteConnection
         Dispose(true);
     }
 
-    public void Open(string filename, SqliteOpenFlags flags, string virtualFileSystemName = null)
+    public void Open(string filename, SqliteOpenFlags flags, bool noForeignKeyEnforcement = false, string virtualFileSystemName = null)
     {
         if (Connected) throw new InvalidOperationException("The database connection is already open.");
         ConnectionFlags = flags | SqliteOpenFlags.ExtendedErrorCodes;
@@ -57,6 +57,9 @@ public class SqliteConnection : ISqliteConnection
         if (ret != SqliteResult.OK)
             throw new SqliteException(ret, $"Cannot open database '{filename}', Code: {ret:X}");
         Filename = filename;
+        // Foreign key enforcement is DISABLED BY DEFAULT in Sqlite3!! 
+        if (!noForeignKeyEnforcement)
+            SetForeignKeyEnforcement(true);
     }
 
     public void OpenReadWrite(string filename, bool mustExist)
@@ -101,6 +104,11 @@ public class SqliteConnection : ISqliteConnection
             Filename = string.Empty;
             ConnectionClosed?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    public void SetForeignKeyEnforcement(bool enabled)
+    {
+        SqliteExternals.SetForeignKeyEnforcement(dbHandle, enabled);
     }
 
     public ISqliteCommand CreateCommand()

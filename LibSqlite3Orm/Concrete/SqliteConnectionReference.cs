@@ -28,10 +28,11 @@ public class SqliteConnectionReference : ISqliteConnection
     public SqliteOpenFlags ConnectionFlags => connection.ConnectionFlags;
     public string VirtualFileSystemName => connection.VirtualFileSystemName;
     public string Filename => connection.Filename;
-    
-    public void Open(string filename, SqliteOpenFlags flags, string virtualFileSystemName = null)
+
+    public void Open(string filename, SqliteOpenFlags flags, bool noForeignKeyEnforcement = false,
+        string virtualFileSystemName = null)
     {
-        connection.Open(filename, flags, virtualFileSystemName);
+        connection.Open(filename, flags, noForeignKeyEnforcement, virtualFileSystemName);
     }
 
     public void OpenReadWrite(string filename, bool mustExist)
@@ -55,6 +56,8 @@ public class SqliteConnectionReference : ISqliteConnection
     {
         connection.Close();
     }
+    
+    public void SetForeignKeyEnforcement(bool enabled) => connection.SetForeignKeyEnforcement(enabled);
 
     public ISqliteCommand CreateCommand() => connection.CreateCommand();
 

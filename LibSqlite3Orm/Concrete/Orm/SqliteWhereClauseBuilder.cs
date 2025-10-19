@@ -12,13 +12,13 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	private readonly IOrmGenerativeLogicTracer generativeLogicTracer;
 	private readonly SqliteDbSchema schema;
 	private readonly Dictionary<string, ExtractedParameter> extractedParameters = new(StringComparer.OrdinalIgnoreCase);
-	private StringBuilder sqlBuilder;
-	private SqliteDbSchemaTable table;
+	private readonly StringBuilder sqlBuilder = new();
+	private readonly List<string> currentConstArrayValues = [];
 	private string currentMemberDbFieldName;
 	private string currentMethodCall;
 	private object currentConstValue;
-	private List<string> currentConstArrayValues = [];
 	private bool inContainsCall;
+	private SqliteDbSchemaTable table;
 
 	public SqliteWhereClauseBuilder(IOrmGenerativeLogicTracer generativeLogicTracer, SqliteDbSchema schema)
 	{
@@ -31,15 +31,19 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 
 	public string Build(Type entityType, Expression expression)
 	{
+		ResetState();
 		table = schema.Tables.Values.Single(x => x.ModelTypeName == entityType.AssemblyQualifiedName);
-		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parse where predicate for table ({table.Name}): {expression}"));
-		extractedParameters.Clear();
-		ReferencedTables.Clear();
-		sqlBuilder = new StringBuilder();
 		Visit(expression);
 		return sqlBuilder.ToString();
 	}
 
+	public override Expression Visit(Expression node)
+	{
+		if (node is null) return null;
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"[Parsing {node.NodeType} Expression] ({table.Name}): {node}"));
+		return base.Visit(node);
+	}
+	
 	protected override Expression VisitUnary(UnaryExpression u)
 	{
 		switch (u.NodeType)
@@ -286,6 +290,14 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			}
 		}
 
+		if (m.Expression is MethodCallExpression mce)
+		{
+			var refObj = Expression.Lambda(mce).Compile().DynamicInvoke();
+			var value = m.Member.GetValue(refObj);
+			Visit(Expression.Constant(value));
+			return m;
+		}
+
 		throw new NotSupportedException($"The member '{m.Member.Name}' is not supported yet");
 	}
 
@@ -294,11 +306,24 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(() =>
 		{
 			currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
-			return $"Visiting Method Call: {currentMethodCall}";
+			return $"[Parsing Expression] Visiting Method Call: {currentMethodCall}";
 		}));
 		if (mc.Method.Name == "Contains")
 			inContainsCall = true;
 		return base.VisitMethodCall(mc);
+	}
+	
+	private void ResetState()
+	{
+		extractedParameters.Clear();
+		ReferencedTables.Clear();
+		sqlBuilder.Clear();
+		currentConstArrayValues.Clear();
+		currentMemberDbFieldName = null;
+		currentMethodCall = null;
+		currentConstValue = null;
+		inContainsCall = false;
+		table = null;
 	}
 
 	private bool NeedToParameterizeValue()
@@ -308,8 +333,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 
 	private bool BuildingInClause()
 	{
-		return inContainsCall && currentConstValue is not null && currentConstValue.GetType().IsArray;// &&
-		       //currentConstArrayValues.Count == 0;
+		return inContainsCall && currentConstValue is not null && currentConstValue.GetType().IsArray;
 	}
 	
 	private bool ArrayValuesBuilt()
@@ -351,14 +375,14 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			// Can't use the == operator here, because the variables are typed as "object" so, it ends up using Object.ReferenceEquals, which will always be false.
 			if (extractedParameters[name].Value.Equals(value))
 			{
-				generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
+				generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"[Parsing Expression] Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
 				return name;
 			}
 
 			name = $"{baseName}{uniqueness++}";
 		}
 
-		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"[Parsing Expression] Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
 		return name;
 	}
 }

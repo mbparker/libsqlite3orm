@@ -171,12 +171,10 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         schemaOrm.BeginTransaction();
         try
         {
-            schemaOrm.ExecuteNonQuery("PRAGMA foreign_keys = off;");
             AddNewTables(changes.NewTables);
             DropRemovedTables(changes.RemovedTables);
             RenameTables(changes.RenamedTables, changes.PreviousSchema);
             AlterTables(changes.AlteredTables, changes.PreviousSchema);
-            schemaOrm.ExecuteNonQuery("PRAGMA foreign_keys = on;");
 
             var schemaJson = JsonConvert.SerializeObject(modelOrm.Context.Schema, Formatting.Indented);
             var migration = new SchemaMigration { Timestamp = DateTime.UtcNow, Schema = schemaJson };
@@ -225,7 +223,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         var sb = new StringBuilder();
         var synthesizer = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, modelOrm.Context.Schema);
         RenameTablesCreateNewTables(changesRenamedTables, synthesizer, sb);
-        RenameTablesCopyRecordsToNewTables(changesRenamedTables, previousSchema, sb);
+        PerformWithoutForeignKeyEnforcement(() => RenameTablesCopyRecordsToNewTables(changesRenamedTables, previousSchema, sb));
         RenameTablesDropOldTables(changesRenamedTables, sb, synthesizer);
     }
 
@@ -269,10 +267,14 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         var sb = new StringBuilder();
         var synthesizerPreviousSchema = ddlSqlSynthesizerFactory(SqliteDdlSqlSynthesisKind.TableOps, previousSchema);
         AlterTablesCreateTempTables(changesAlteredTables, synthesizerPreviousSchema, sb);
-        AlterTablesCopyRecordsToTempTables(changesAlteredTables, sb);
-        AlterTablesDropOriginalTables(changesAlteredTables, sb, synthesizerPreviousSchema);
+        PerformWithoutForeignKeyEnforcement(() =>
+        {
+            AlterTablesCopyRecordsToTempTables(changesAlteredTables, sb);
+            AlterTablesDropOriginalTables(changesAlteredTables, sb, synthesizerPreviousSchema);
+        });
+        
         AlterTablesCreateAlteredTables(changesAlteredTables, sb);
-        AlterTablesCopyRecordsToAlteredTables(changesAlteredTables, sb);
+        PerformWithoutForeignKeyEnforcement(() => AlterTablesCopyRecordsToAlteredTables(changesAlteredTables, sb));
         AlterTablesDropTempTables(changesAlteredTables, synthesizerPreviousSchema, sb);
     }
     
@@ -402,4 +404,17 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             .Take(1)
             .SingleRecord();
     }
+    
+    private void PerformWithoutForeignKeyEnforcement(Action action)
+    {
+        Connection.SetForeignKeyEnforcement(false);
+        try
+        {
+            action?.Invoke();
+        }
+        finally
+        {
+            Connection.SetForeignKeyEnforcement(true);
+        }
+    }    
 }

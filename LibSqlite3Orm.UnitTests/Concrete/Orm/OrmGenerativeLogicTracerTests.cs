@@ -32,7 +32,7 @@ public class OrmGenerativeLogicTracerTests
 
         // Assert
         Assert.That(_sqlStatementEvents.Count, Is.EqualTo(1));
-        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo("Executing SQL:  SELECT * FROM Users\n\tParameters:\n\t\tNone\n"));
+        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo("[Executing SQL]  SELECT * FROM Users\n\tParameters:\n\t\tNone\n"));
     }
 
     [Test]
@@ -106,8 +106,8 @@ public class OrmGenerativeLogicTracerTests
         Assert.That(_sqlStatementEvents.Count, Is.EqualTo(2));
         Assert.That(_whereClauseEvents.Count, Is.EqualTo(2));
         
-        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo("Executing SQL:  SQL 1\n\tParameters:\n\t\tNone\n"));
-        Assert.That(_sqlStatementEvents[1].Message.Value, Is.EqualTo("Executing SQL:  SQL 2\n\tParameters:\n\t\tNone\n"));
+        Assert.That(_sqlStatementEvents[0].Message.Value, Is.EqualTo("[Executing SQL]  SQL 1\n\tParameters:\n\t\tNone\n"));
+        Assert.That(_sqlStatementEvents[1].Message.Value, Is.EqualTo("[Executing SQL]  SQL 2\n\tParameters:\n\t\tNone\n"));
         Assert.That(_whereClauseEvents[0].Message.Value, Is.EqualTo("WHERE 1"));
         Assert.That(_whereClauseEvents[1].Message.Value, Is.EqualTo("WHERE 2"));
     }
@@ -153,7 +153,7 @@ public class OrmGenerativeLogicTracerTests
         // Assert
         Assert.That(events1.Count, Is.EqualTo(1));
         Assert.That(events2.Count, Is.EqualTo(1));
-        Assert.That(events1[0], Is.EqualTo("Executing SQL:  Test SQL\n\tParameters:\n\t\tNone\n"));
-        Assert.That(events2[0], Is.EqualTo("Executing SQL:  Test SQL\n\tParameters:\n\t\tNone\n"));
+        Assert.That(events1[0], Is.EqualTo("[Executing SQL]  Test SQL\n\tParameters:\n\t\tNone\n"));
+        Assert.That(events2[0], Is.EqualTo("[Executing SQL]  Test SQL\n\tParameters:\n\t\tNone\n"));
     }
 }

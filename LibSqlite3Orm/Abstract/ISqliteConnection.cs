@@ -21,12 +21,13 @@ public interface ISqliteConnection : IDisposable
     string Filename { get; }
 
     /// <summary>
-    /// Open a database with full control over the connection flags and optionally specify a VFS module name.
+    /// Open a database with full control over the connection flags, default foreign key enforcement, and optionally specify a VFS module name.
     /// </summary>
     /// <param name="filename"></param>
     /// <param name="flags"></param>
+    /// <param name="noForeignKeyEnforcement"></param>
     /// <param name="virtualFileSystemName"></param>
-    void Open(string filename, SqliteOpenFlags flags, string virtualFileSystemName = null);
+    void Open(string filename, SqliteOpenFlags flags, bool noForeignKeyEnforcement = false, string virtualFileSystemName = null);
     
     /// <summary>
     /// This overload will open a database for read and write. Optionally, the database must already exist. Extended error codes are enabled.
@@ -46,6 +47,8 @@ public interface ISqliteConnection : IDisposable
     IntPtr GetHandle();
     
     void Close();
+
+    void SetForeignKeyEnforcement(bool enabled);
 
     ISqliteCommand CreateCommand();
 
