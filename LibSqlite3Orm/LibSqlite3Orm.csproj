@@ -8,13 +8,14 @@
         <Configurations>Release;Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Title>Mathew Parker</Title>
+        <Title>LibSqlite3Orm</Title>
         <Description>A cross platform, easy to use, Object Relational Mapper for SQLite 3</Description>
-        <Copyright>2025, Mathew Parker</Copyright>
+        <Copyright>Copyright (c) 2025, Mathew Parker</Copyright>
         <RepositoryUrl>https://github.com/mbparker/libsqlite3orm</RepositoryUrl>
         <PackageTags>Cross Platform, ORM, .NET, Sqlite</PackageTags>
         <Version>1.2.54</Version>
         <Company>Mathew Parker</Company>
+        <Authors>Mathew Parker</Authors>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +23,25 @@
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
       <PackageReference Include="System.IO.Hashing" Version="9.0.9" />
       <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.10" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DebugType>full</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugSymbols>true</DebugSymbols>
+      <DebugType>full</DebugType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\LICENSE.txt" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>
