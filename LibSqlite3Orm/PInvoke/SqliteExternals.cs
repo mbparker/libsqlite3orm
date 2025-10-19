@@ -176,20 +176,8 @@ public static partial class SqliteExternals
 
 	public static void SetForeignKeyEnforcement(IntPtr db, bool enabled)
 	{
-		var outVal = Marshal.AllocHGlobal(sizeof(int));
-		try
-		{
-			var ret = DbConfig(db, SqliteDbConfigOption.EnableForeignKeys, enabled ? 1 : 0, outVal);
-			if (ret != SqliteResult.OK)
-				throw new SqliteException(ret, "Cannot set foreign key enforcement: Library error.");
-			var realOutVal = Marshal.ReadInt32(outVal);
-			if (realOutVal == 1 != enabled)
-				throw new ApplicationException(
-					"Cannot set foreign key enforcement: Value after change is not as expected.");
-		}
-		finally
-		{
-			Marshal.FreeHGlobal(outVal);
-		}
+		var ret = DbConfig(db, SqliteDbConfigOption.EnableForeignKeys, enabled ? 1 : 0, IntPtr.Zero);
+		if (ret != SqliteResult.OK)
+			throw new SqliteException(ret, "Cannot set foreign key enforcement: Library error.");
 	}
 }
