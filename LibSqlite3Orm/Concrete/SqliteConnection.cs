@@ -58,8 +58,8 @@ public class SqliteConnection : ISqliteConnection
             throw new SqliteException(ret, $"Cannot open database '{filename}', Code: {ret:X}");
         Filename = filename;
         // Foreign key enforcement is DISABLED BY DEFAULT in Sqlite3!! 
-        if (!noForeignKeyEnforcement)
-            SetForeignKeyEnforcement(true);
+        //if (!noForeignKeyEnforcement)
+        //    SetForeignKeyEnforcement(true);
     }
 
     public void OpenReadWrite(string filename, bool mustExist)
