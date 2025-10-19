@@ -13,7 +13,7 @@
         <Copyright>Copyright (c) 2025, Mathew Parker</Copyright>
         <RepositoryUrl>https://github.com/mbparker/libsqlite3orm</RepositoryUrl>
         <PackageTags>Cross Platform, ORM, .NET, Sqlite</PackageTags>
-        <Version>1.2.55</Version>
+        <Version>1.2.56</Version>
         <Company>Mathew Parker</Company>
         <Authors>Mathew Parker</Authors>
     </PropertyGroup>
@@ -26,19 +26,20 @@
     </ItemGroup>
 
     <PropertyGroup>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>portable</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DebugType>full</DebugType>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DebugSymbols>true</DebugSymbols>
-      <DebugType>full</DebugType>
-    </PropertyGroup>
-
+    
     <ItemGroup>
         <None Include="..\README.md" Pack="true" PackagePath="\"/>
         <None Include="..\LICENSE.txt" Pack="true" PackagePath="\"/>
