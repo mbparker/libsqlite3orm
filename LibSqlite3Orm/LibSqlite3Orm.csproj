@@ -13,7 +13,7 @@
         <Copyright>Copyright (c) 2025, Mathew Parker</Copyright>
         <RepositoryUrl>https://github.com/mbparker/libsqlite3orm</RepositoryUrl>
         <PackageTags>Cross Platform, ORM, .NET, Sqlite</PackageTags>
-        <Version>1.2.56</Version>
+        <Version>1.2.57</Version>
         <Company>Mathew Parker</Company>
         <Authors>Mathew Parker</Authors>
     </PropertyGroup>
@@ -31,6 +31,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <DebugSymbols>true</DebugSymbols>
         <DebugType>portable</DebugType>
     </PropertyGroup>
