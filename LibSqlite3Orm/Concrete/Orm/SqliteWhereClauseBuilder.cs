@@ -40,7 +40,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	public override Expression Visit(Expression node)
 	{
 		if (node is null) return null;
-		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"[Parsing {node.NodeType} Expression] ({table.Name}): {node}"));
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(() => $"[Parsing {node.NodeType} Expression] ({table.Name}): {node}"));
 		return base.Visit(node);
 	}
 	
@@ -375,14 +375,14 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			// Can't use the == operator here, because the variables are typed as "object" so, it ends up using Object.ReferenceEquals, which will always be false.
 			if (extractedParameters[name].Value.Equals(value))
 			{
-				generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"[Parsing Expression] Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
+				generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(() => $"[Parsing Expression] Parameter referenced: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
 				return name;
 			}
 
 			name = $"{baseName}{uniqueness++}";
 		}
 
-		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>($"[Parsing Expression] Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
+		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(() => $"[Parsing Expression] Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
 		return name;
 	}
 }

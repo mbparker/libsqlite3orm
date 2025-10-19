@@ -488,7 +488,7 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
         return this;
     }
     
-    public SqliteForeignKeyOptionsBuilder<TTable> HasForeignNavigationProperty<TForeignTable>(Expression<Func<TForeignTable, Lazy<ISqliteQueryable<TTable>>>> listField)
+    public SqliteForeignKeyOptionsBuilder<TTable> WithMany<TForeignTable>(Expression<Func<TForeignTable, Lazy<ISqliteQueryable<TTable>>>> listField)
     {
         if (listField.Body is MemberExpression exp)
         {
@@ -506,7 +506,7 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
         throw new InvalidExpressionException();
     }
     
-    public SqliteForeignKeyOptionsBuilder<TTable> HasNavigationProperty<TForeignTable>(Expression<Func<TTable, Lazy<TForeignTable>>> detailField)
+    public SqliteForeignKeyOptionsBuilder<TTable> HasOne<TForeignTable>(Expression<Func<TTable, Lazy<TForeignTable>>> detailField)
     {
         if (detailField.Body is MemberExpression exp)
         {
