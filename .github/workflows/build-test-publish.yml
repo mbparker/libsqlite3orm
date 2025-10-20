@@ -30,7 +30,7 @@ jobs:
     - name: Determine Version with GitVersion
       uses: gittools/actions/gitversion/setup@v2
       with:
-        versionSpec: '6.3.x'
+        versionSpec: '6.x'
         
     - name: Use GitVersion
       id: gitversion
@@ -82,7 +82,7 @@ jobs:
     - name: Determine Version with GitVersion
       uses: gittools/actions/gitversion/setup@v2
       with:
-        versionSpec: '6.3.x'
+        versionSpec: '6.x'
         
     - name: Use GitVersion
       id: gitversion
