@@ -53,7 +53,7 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
     [TestCase(false, TestEntityKind.Kind2)]
     [TestCase(true, TestEntityKind.Kind1)]
     [TestCase(true, TestEntityKind.Kind2)]    
-    public void Get_WhenFilterOnEnumAndNotRecursive_ReturnsCorrectRecordsWithoutNavigationProps(bool recursiveLoad, TestEntityKind enumVal)
+    public void Get_WhenFilterOnEnum_ReturnsCorrectRecordSet(bool recursiveLoad, TestEntityKind enumVal)
     {
         Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
             x => x.EnumValue == enumVal, x => x.Id, (actual, expected) =>
@@ -69,7 +69,7 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
     [TestCase(false, 11, 30)]
     [TestCase(true, 1, 10)]
     [TestCase(true, 11, 30)]    
-    public void Get_WhenFilterOnId_ReturnsCorrectRecords(bool recursiveLoad, long idLow, long idHigh)
+    public void Get_WhenFilterOnId_ReturnsCorrectRecordSet(bool recursiveLoad, long idLow, long idHigh)
     {
         Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
             x => x.Id >= idLow && x.Id <= idHigh, x => x.Id, (actual, expected) =>
