@@ -38,7 +38,8 @@ jobs:
       id: gitversion
       uses: gittools/actions/gitversion/execute@v4
 
-    - name: Print Semver
+    - name: Print Calculated Version
+      if: runner.os == 'Linux'
       run: echo ${{ steps.gitversion.outputs.MajorMinorPatch }}
 
     - name: Restore dependencies
