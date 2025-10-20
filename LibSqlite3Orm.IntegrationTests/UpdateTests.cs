@@ -20,7 +20,7 @@ public class UpdateTests : IntegrationTestSeededBase<TestDbContext>
             .Where(x => x.Id == entity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(entity, actual);
+        AssertThatRecordsMatch(actual, entity);
     }
     
     [Test]
@@ -37,7 +37,7 @@ public class UpdateTests : IntegrationTestSeededBase<TestDbContext>
             .Where(x => x.Id == entity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(entity, actual);
+        AssertThatRecordsMatch(actual, entity);
     }
 
     [Test]
@@ -58,9 +58,9 @@ public class UpdateTests : IntegrationTestSeededBase<TestDbContext>
             .Where(x => x.Id == linkEntity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(linkEntity, actual);
-        AssertThatRecordsMatch(SeededTagRecords[linkEntity.TagId], actual.Tag.Value);
-        AssertThatRecordsMatch(SeededMasterRecords[linkEntity.EntityId], actual.Entity.Value);
+        AssertThatRecordsMatch(actual, linkEntity);
+        AssertThatRecordsMatch(actual.Tag.Value, SeededTagRecords[linkEntity.TagId]);
+        AssertThatRecordsMatch(actual.Entity.Value, SeededMasterRecords[linkEntity.EntityId]);
     }
     
     [Test]
@@ -124,6 +124,6 @@ public class UpdateTests : IntegrationTestSeededBase<TestDbContext>
         Assert.That(actual.Length, Is.EqualTo(entities.Length));
 
         for (var i = 0; i < entities.Length; i++)
-            AssertThatRecordsMatch(entities[i], actual[i]);
+            AssertThatRecordsMatch(actual[i], entities[i]);
     }
 }

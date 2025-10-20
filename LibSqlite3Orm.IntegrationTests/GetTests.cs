@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using LibSqlite3Orm.IntegrationTests.TestDataModel;
 
 namespace LibSqlite3Orm.IntegrationTests;
@@ -13,12 +14,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             .OrderBy(x => x.Id)
             .AllRecords();
 
-        var expected = SeededMasterRecords.Values.OrderBy(x => x.Id).ToArray();
+        var expected = SeededMasterRecords
+            .Values
+            .OrderBy(x => x.Id)
+            .ToArray();
+        
         Assert.That(actual.Length, Is.EqualTo(expected.Length));
-
         for (var i = 0; i < expected.Length; i++)
         {
-            AssertThatRecordsMatch(expected[i], actual[i]);
+            AssertThatRecordsMatch(actual[i], expected[i]);
             Assert.That(actual[i].Tags.Value, Is.Null);
         }
     }
@@ -26,7 +30,10 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void Get_WhenNoWhereClauseAndRecursive_ReturnsAllRecordsWithNavigationProps()
     {
-        var expected = SeededMasterRecords.Values.OrderBy(x => x.Id).ToArray();
+        var expected = SeededMasterRecords
+            .Values
+            .OrderBy(x => x.Id)
+            .ToArray();
         
         var actual = Orm
             .Get<TestEntityMaster>(recursiveLoad: true)
@@ -37,22 +44,92 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
 
         for (var i = 0; i < expected.Length; i++)
         {
-            AssertThatRecordsMatch(expected[i], actual[i]);
-            Assert.That(actual[i].Tags.Value, Is.Not.Null);
-            var expectedTagLinks = SeededLinkRecords.Values.Where(x => x.EntityId == expected[i].Id)
-                .OrderBy(x => x.TagId).ToArray();            
-            var actualTagLinks = actual[i].Tags.Value.AllRecords().OrderBy(x => x.TagId).ToArray();
-            Assert.That(actualTagLinks.Length, Is.EqualTo(expectedTagLinks.Length));
-            for (var j = 0; j < expectedTagLinks.Length; j++)
-            {
-                var expectedTagLink = expectedTagLinks[j];
-                var actualTagLink =  actualTagLinks[j];
-                AssertThatRecordsMatch(expectedTagLink, actualTagLink);
-                Assert.That(actualTagLink.Tag.Value, Is.Not.Null);
-                AssertThatRecordsMatch(SeededTagRecords[expectedTagLink.TagId], actualTagLink.Tag.Value);
-                Assert.That(actualTagLink.Entity.Value, Is.Not.Null);
-                AssertThatRecordsMatch(SeededMasterRecords[expectedTagLink.EntityId], actualTagLink.Entity.Value);
-            }
+            AssertThatRecordsMatch(actual[i], expected[i]);
+            AssertThatTagLinkRecordsMatch(actual[i], expected[i]);
         }
-    }    
+    }
+    
+    [TestCase(false, TestEntityKind.Kind1)]
+    [TestCase(false, TestEntityKind.Kind2)]
+    [TestCase(true, TestEntityKind.Kind1)]
+    [TestCase(true, TestEntityKind.Kind2)]    
+    public void Get_WhenFilterOnEnumAndNotRecursive_ReturnsCorrectRecordsWithoutNavigationProps(bool recursiveLoad, TestEntityKind enumVal)
+    {
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => x.EnumValue == enumVal, x => x.Id, (actual, expected) =>
+            {
+                if (recursiveLoad)
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                else
+                    Assert.That(actual.Tags.Value, Is.Null);
+            });        
+    }
+    
+    [TestCase(false, 1, 10)]
+    [TestCase(false, 11, 30)]
+    [TestCase(true, 1, 10)]
+    [TestCase(true, 11, 30)]    
+    public void Get_WhenFilterOnId_ReturnsCorrectRecords(bool recursiveLoad, long idLow, long idHigh)
+    {
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => x.Id >= idLow && x.Id <= idHigh, x => x.Id, (actual, expected) =>
+            {
+                if (recursiveLoad)
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                else
+                    Assert.That(actual.Tags.Value, Is.Null);
+            });
+    }
+
+    private void Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder<TEntity, TKey>(bool recursiveLoad,
+        Dictionary<long, TEntity> expectedDataSource, Expression<Func<TEntity, bool>> filterExpression,
+        Expression<Func<TEntity, TKey>> sortExpression, Action<TEntity, TEntity> assertNavPropsAction = null) where TEntity : new()
+    {
+        var actual = Orm
+            .Get<TEntity>(recursiveLoad)
+            .Where(filterExpression)
+            .OrderBy(sortExpression)
+            .AllRecords();
+
+        var expected = expectedDataSource
+            .Values
+            .Where(filterExpression.Compile())
+            .OrderBy(sortExpression.Compile())
+            .ToArray();
+
+        Assert.That(actual.Length, Is.EqualTo(expected.Length));
+        for (var i = 0; i < expected.Length; i++)
+        {
+            AssertThatRecordsMatch(actual[i], expected[i]);
+            assertNavPropsAction?.Invoke(actual[i], expected[i]);
+        }
+    }
+
+    private void AssertThatTagLinkRecordsMatch(TestEntityMaster actual, TestEntityMaster expected)
+    {
+        Assert.That(actual.Tags.Value, Is.Not.Null);
+            
+        var expectedTagLinks = SeededLinkRecords
+            .Values
+            .Where(x => x.EntityId == expected.Id)
+            .OrderBy(x => x.TagId)
+            .ToArray();            
+            
+        var actualTagLinks = actual.Tags.Value
+            .AllRecords()
+            .OrderBy(x => x.TagId)
+            .ToArray();
+            
+        Assert.That(actualTagLinks.Length, Is.EqualTo(expectedTagLinks.Length));
+        for (var j = 0; j < expectedTagLinks.Length; j++)
+        {
+            var expectedTagLink = expectedTagLinks[j];
+            var actualTagLink =  actualTagLinks[j];
+            AssertThatRecordsMatch(actualTagLink, expectedTagLink);
+            Assert.That(actualTagLink.Tag.Value, Is.Not.Null);
+            AssertThatRecordsMatch(actualTagLink.Tag.Value, SeededTagRecords[expectedTagLink.TagId]);
+            Assert.That(actualTagLink.Entity.Value, Is.Not.Null);
+            AssertThatRecordsMatch(actualTagLink.Entity.Value, SeededMasterRecords[expectedTagLink.EntityId]);
+        }        
+    }
 }

@@ -161,9 +161,9 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     /// The member enumeration will ignore any member decorated with the NotMapped attribute. It will also ignore any
     /// member which is Lazy. The presumption being that it is a navigation property.
     /// </summary>
-    /// <param name="expected"></param>
     /// <param name="actual"></param>
-    protected void AssertThatRecordsMatch(object expected, object actual)
+    /// <param name="expected"></param>
+    protected void AssertThatRecordsMatch(object actual, object expected)
     {
         Assert.That(actual, Is.Not.Null);
         

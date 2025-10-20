@@ -19,7 +19,7 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
             .Where(x => x.Id == entity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(entity, actual);
+        AssertThatRecordsMatch(actual, entity);
     }
     
     [Test]
@@ -35,7 +35,7 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
             .Where(x => x.Id == entity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(entity, actual);
+        AssertThatRecordsMatch(actual, entity);
     } 
     
     [Test]
@@ -51,7 +51,7 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
             .Where(x => x.Id == entity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(entity, actual);
+        AssertThatRecordsMatch(actual, entity);
     }
     
     [Test]
@@ -87,7 +87,7 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
         Assert.That(actual.Length, Is.EqualTo(entities.Length));
 
         for (var i = 0; i < entities.Length; i++)
-            AssertThatRecordsMatch(entities[i], actual[i]);
+            AssertThatRecordsMatch(actual[i], entities[i]);
     }  
     
     [Test]
@@ -103,7 +103,7 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
             .Where(x => x.Id == entity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(entity, actual);
+        AssertThatRecordsMatch(actual, entity);
     }
     
     [Test]
@@ -140,7 +140,7 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
         Assert.That(actual.Length, Is.EqualTo(entities.Length));
 
         for (var i = 0; i < entities.Length; i++)
-            AssertThatRecordsMatch(entities[i], actual[i]);
+            AssertThatRecordsMatch(actual[i], entities[i]);
     }  
     
     [Test]
@@ -164,9 +164,9 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
             .Where(x => x.Id == linkEntity.Id)
             .SingleRecord();
         
-        AssertThatRecordsMatch(linkEntity, actual);
-        AssertThatRecordsMatch(masterEntity, actual.Entity.Value);
-        AssertThatRecordsMatch(tagEntity, actual.Tag.Value);
+        AssertThatRecordsMatch(actual, linkEntity);
+        AssertThatRecordsMatch(actual.Entity.Value, masterEntity);
+        AssertThatRecordsMatch(actual.Tag.Value, tagEntity);
     }
     
     [Test]
