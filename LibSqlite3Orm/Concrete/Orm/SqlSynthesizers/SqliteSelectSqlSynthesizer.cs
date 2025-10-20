@@ -40,7 +40,7 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
                     otherTablesReferenced.Add(otherTableName);
             }
             
-            if (selectArgs.LoadNavigationProps)
+            if (selectArgs.RecursiveLoad)
             {
                 foreach (var detProp in table.NavigationProperties)
                 {

@@ -281,11 +281,12 @@ public class SqliteTableOptionsBuilder<TTable>
         {
             if (!tableOptions.Columns.ContainsKey(member.Name))
             {
+                var memberType = member.GetValueType();
+                if (memberType.IsLazy()) continue;
                 var options = new SqliteTableColumnOptions(tableOptions);
                 options.Member = member;
                 options.Name = options.Member.Name;
-
-                var memberType = member.GetValueType();
+                
                 if (memberType.IsNotNullable())
                 {
                     options.IsNotNull = true;

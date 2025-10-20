@@ -156,6 +156,13 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         container = null;
     }
 
+    /// <summary>
+    /// This will use reflection to compare types, field values, and property values between the actual and expected objects.
+    /// The member enumeration will ignore any member decorated with the NotMapped attribute. It will also ignore any
+    /// member which is Lazy. The presumption being that it is a navigation property.
+    /// </summary>
+    /// <param name="expected"></param>
+    /// <param name="actual"></param>
     protected void AssertThatRecordsMatch(object expected, object actual)
     {
         Assert.That(actual, Is.Not.Null);
@@ -167,12 +174,13 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
             .GetMembers(BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.Public).Where(x =>
                 x.MemberType.HasFlag(MemberTypes.Field) || x.MemberType.HasFlag(MemberTypes.Property) &&
                 x.GetCustomAttributes(typeof(NotMappedAttribute), true).Length == 0);
-
         foreach (var member in members)
         {
+            var memberType = member.GetValueType();
+            if (memberType.IsLazy()) continue;
             var expectedValue = member.GetValue(expected);
             var actualValue = member.GetValue(actual);
-            if (member.GetValueType().IsArray)
+            if (memberType.IsArray)
             {
                 var actualArray = (IList)actualValue;
                 var expectedArray = (IList)expectedValue;

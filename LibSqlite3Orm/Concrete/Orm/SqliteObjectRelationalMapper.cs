@@ -168,9 +168,9 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
         return EntityServices.UpsertMany(Connection, entities);
     }
 
-    public ISqliteQueryable<T> Get<T>(bool loadNavigationProps = false) where T : new()
+    public ISqliteQueryable<T> Get<T>(bool recursiveLoad = false) where T : new()
     {
-        return EntityServices.Get<T>(Connection, loadNavigationProps);
+        return EntityServices.Get<T>(Connection, recursiveLoad);
     }
     
     public int Delete<T>(Expression<Func<T, bool>> predicate)

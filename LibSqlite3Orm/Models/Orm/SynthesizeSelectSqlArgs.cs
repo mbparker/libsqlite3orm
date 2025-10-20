@@ -15,11 +15,11 @@ public enum SqliteAggregateFunction
 
 public class SynthesizeSelectSqlArgs
 {
-    public SynthesizeSelectSqlArgs(bool loadNavigationProps, Expression filterExpr,
+    public SynthesizeSelectSqlArgs(bool recursiveLoad, Expression filterExpr,
         IReadOnlyList<SqliteSortSpec> sortSpecs, int? skipCount, int? takeCount, SqliteAggregateFunction? aggFunc,
         MemberInfo aggTargetMember)
     {
-        LoadNavigationProps = loadNavigationProps;
+        RecursiveLoad = recursiveLoad;
         FilterExpr = filterExpr;
         SortSpecs = sortSpecs;
         SkipCount = skipCount;
@@ -28,7 +28,7 @@ public class SynthesizeSelectSqlArgs
         AggTargetMember = aggTargetMember;
     }
     
-    public bool LoadNavigationProps { get; }
+    public bool RecursiveLoad { get; }
     public Expression FilterExpr { get; }
     public IReadOnlyList<SqliteSortSpec> SortSpecs { get; }
     public int? SkipCount { get; }

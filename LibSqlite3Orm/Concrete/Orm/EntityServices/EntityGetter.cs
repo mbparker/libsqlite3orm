@@ -26,7 +26,7 @@ public class EntityGetter : IEntityGetter
         this.context = context;
     }
 
-    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool loadNavigationProps) where T : new()
+    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool recursiveLoad) where T : new()
     {
         var entityTypeName = typeof(T).AssemblyQualifiedName;
         var table = context.Schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == entityTypeName);
@@ -45,10 +45,10 @@ public class EntityGetter : IEntityGetter
 
             T DeserializeRow(ISqliteDataRow row)
             {
-                return entityWriter.Deserialize<T>(context.Schema, table, row, loadNavigationProps, connection);
+                return entityWriter.Deserialize<T>(context.Schema, table, row, recursiveLoad, connection);
             }
             
-            return new SqliteOrderedQueryable<T>(context.Schema, ExecuteQuery, DeserializeRow, loadNavigationProps);
+            return new SqliteOrderedQueryable<T>(context.Schema, ExecuteQuery, DeserializeRow, recursiveLoad);
         }
         
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");

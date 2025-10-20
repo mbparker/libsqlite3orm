@@ -16,16 +16,16 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
     }
 
     public void LoadDetailProperties<TEntity>(TEntity entity, SqliteDbSchemaTable table, ISqliteDataRow row,
-        bool loadNavigationProps, ISqliteConnection connection) where TEntity : new()
+        bool recursiveLoad, ISqliteConnection connection) where TEntity : new()
     {
         var entityType = typeof(TEntity);
         var detailGetterType = typeof(IEntityDetailGetter);
-        LoadDetailEntityProperty(entity, table, row, loadNavigationProps, connection, detailGetterType, entityType);
-        LoadDetailEntityListProperty(entity, table, loadNavigationProps, connection, detailGetterType, entityType);
+        LoadDetailEntityProperty(entity, table, row, recursiveLoad, connection, detailGetterType, entityType);
+        LoadDetailEntityListProperty(entity, table, recursiveLoad, connection, detailGetterType, entityType);
     }
 
     private void LoadDetailEntityProperty<TEntity>(TEntity entity, SqliteDbSchemaTable table, ISqliteDataRow row,
-        bool loadNavigationProps, ISqliteConnection connection, Type detailGetterType, Type entityType)
+        bool recursiveLoad, ISqliteConnection connection, Type detailGetterType, Type entityType)
         where TEntity : new()
     {
         var getDetailsGeneric = detailGetterType.GetMethod(nameof(IEntityDetailGetter.GetDetails));
@@ -44,7 +44,7 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
                             var getDetails =
                                 getDetailsGeneric.MakeGenericMethod(entityType, detailEntityType);
                             var detailEntity = getDetails.Invoke(entityDetailGetter.Value,
-                                [entity, loadNavigationProps, row, connection]);
+                                [entity, recursiveLoad, row, connection]);
                             member.SetValue(entity, detailEntity);
                         }
                     }
@@ -53,7 +53,7 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
         }
     }
 
-    private void LoadDetailEntityListProperty<TEntity>(TEntity entity, SqliteDbSchemaTable table, bool loadNavigationProps,
+    private void LoadDetailEntityListProperty<TEntity>(TEntity entity, SqliteDbSchemaTable table, bool recursiveLoad,
         ISqliteConnection connection, Type detailGetterType, Type entityType) where TEntity : new()
     {
         var getDetailsListGeneric = detailGetterType.GetMethod(nameof(IEntityDetailGetter.GetDetailsList));
@@ -72,7 +72,7 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
                             var getDetailsList =
                                 getDetailsListGeneric.MakeGenericMethod(entityType, detailEntityType);
                             var queryable = getDetailsList.Invoke(entityDetailGetter.Value,
-                                [entity, loadNavigationProps, connection]);
+                                [entity, recursiveLoad, connection]);
                             member.SetValue(entity, queryable);
                         }
                     }

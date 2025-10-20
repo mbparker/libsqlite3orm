@@ -24,7 +24,7 @@ public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TCo
     int UpdateMany<T>(IEnumerable<T> entities);
     UpsertResult Upsert<T>(T entity);
     UpsertManyResult UpsertMany<T>(IEnumerable<T> entities);
-    ISqliteQueryable<T> Get<T>(bool loadNavigationProps = false) where T : new();
+    ISqliteQueryable<T> Get<T>(bool recursiveLoad = false) where T : new();
     int Delete<T>(Expression<Func<T, bool>> predicate);
     int DeleteAll<T>();
 }

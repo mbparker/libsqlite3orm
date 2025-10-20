@@ -43,9 +43,9 @@ public class EntityServices : IEntityServices
         return creator.InsertMany(connection, entities);
     }
     
-    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool loadNavigationProps = false) where T : new()
+    public ISqliteQueryable<T> Get<T>(ISqliteConnection connection, bool recursiveLoad = false) where T : new()
     {
-        return getter.Get<T>(connection, loadNavigationProps);
+        return getter.Get<T>(connection, recursiveLoad);
     }
     
     public bool Update<T>(ISqliteConnection connection, T entity)

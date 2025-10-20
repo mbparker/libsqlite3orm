@@ -54,7 +54,7 @@ public class UpdateTests : IntegrationTestSeededBase<TestDbContext>
         Assert.That(ret, Is.True);
         
         var actual = Orm
-            .Get<TestEntityTagLink>(loadNavigationProps: true)
+            .Get<TestEntityTagLink>(recursiveLoad: true)
             .Where(x => x.Id == linkEntity.Id)
             .SingleRecord();
         

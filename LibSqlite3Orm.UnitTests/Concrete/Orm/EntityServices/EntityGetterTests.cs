@@ -111,7 +111,7 @@ public class EntityGetterTests
         _mockSchema.Tables.Add("TestTable", table);
 
         // Act
-        var result = _entityGetter.Get<TestEntity>(_mockConnection, loadNavigationProps: true);
+        var result = _entityGetter.Get<TestEntity>(_mockConnection, recursiveLoad: true);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -131,7 +131,7 @@ public class EntityGetterTests
         _mockSchema.Tables.Add("TestTable", table);
 
         // Act
-        var result = _entityGetter.Get<TestEntity>(_mockConnection, loadNavigationProps: false);
+        var result = _entityGetter.Get<TestEntity>(_mockConnection, recursiveLoad: false);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -222,8 +222,8 @@ public class EntityGetterTests
         _mockSchema.Tables.Add("TestTable", table);
 
         // Act
-        var result1 = _entityGetter.Get<TestEntity>(_mockConnection, loadNavigationProps: false);
-        var result2 = _entityGetter.Get<TestEntity>(_mockConnection, loadNavigationProps: false);
+        var result1 = _entityGetter.Get<TestEntity>(_mockConnection, recursiveLoad: false);
+        var result2 = _entityGetter.Get<TestEntity>(_mockConnection, recursiveLoad: false);
 
         // Assert - Both should work the same way
         Assert.That(result1, Is.Not.Null);

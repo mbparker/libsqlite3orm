@@ -20,7 +20,7 @@ public class SqliteEntityWriter : ISqliteEntityWriter
     }
 
     public TEntity Deserialize<TEntity>(SqliteDbSchema schema, SqliteDbSchemaTable table, ISqliteDataRow row,
-        bool loadNavigationProps, ISqliteConnection connection) where TEntity : new()
+        bool recursiveLoad, ISqliteConnection connection) where TEntity : new()
     {
         var entity = new TEntity();
         var entityType = entity.GetType();
@@ -39,7 +39,7 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             }
         }
 
-        detailPropertyLoader.LoadDetailProperties(entity, table, row, loadNavigationProps, connection);
+        detailPropertyLoader.LoadDetailProperties(entity, table, row, recursiveLoad, connection);
 
         return entity;
     }

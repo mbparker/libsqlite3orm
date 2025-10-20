@@ -24,16 +24,16 @@ public class EntityDetailGetter : IEntityDetailGetter
         detailPropertyLoader = new  Lazy<ISqliteDetailPropertyLoader>(() => detailPropertyLoaderFactory(this.context));
     }
 
-    public Lazy<TDetails> GetDetails<TTable, TDetails>(TTable record, bool loadNavigationProps,
+    public Lazy<TDetails> GetDetails<TTable, TDetails>(TTable record, bool recursiveLoad,
         ISqliteDataRow row, ISqliteConnection connection) where TDetails : new()
     {
-        return GetDetailsFromRow<TDetails>(loadNavigationProps, row, connection) ??
-               GetDetailsFromNewQuery<TTable, TDetails>(record, loadNavigationProps, connection);
+        return GetDetailsFromRow<TDetails>(recursiveLoad, row, connection) ??
+               GetDetailsFromNewQuery<TTable, TDetails>(record, recursiveLoad, connection);
     }
     
-    public Lazy<ISqliteQueryable<TDetailEntity>> GetDetailsList<TEntity, TDetailEntity>(TEntity record, bool loadNavigationProps, ISqliteConnection connection) where TDetailEntity : new()
+    public Lazy<ISqliteQueryable<TDetailEntity>> GetDetailsList<TEntity, TDetailEntity>(TEntity record, bool recursiveLoad, ISqliteConnection connection) where TDetailEntity : new()
     {
-        if (!loadNavigationProps || connection is null)
+        if (!recursiveLoad || connection is null)
         {
             return new Lazy<ISqliteQueryable<TDetailEntity>>(default(ISqliteQueryable<TDetailEntity>));
         }
@@ -41,9 +41,9 @@ public class EntityDetailGetter : IEntityDetailGetter
         return new Lazy<ISqliteQueryable<TDetailEntity>>(() => GetDetailsQueryable<TEntity, TDetailEntity>(record, connection));
     }
     
-    private Lazy<TEntity> GetDetailsFromRow<TEntity>(bool loadNavigationProps, ISqliteDataRow row, ISqliteConnection connection) where TEntity : new()
+    private Lazy<TEntity> GetDetailsFromRow<TEntity>(bool recursiveLoad, ISqliteDataRow row, ISqliteConnection connection) where TEntity : new()
     {
-        if (!loadNavigationProps || connection is null)
+        if (!recursiveLoad || connection is null)
         {
             return new Lazy<TEntity>(default(TEntity));
         }
@@ -79,7 +79,7 @@ public class EntityDetailGetter : IEntityDetailGetter
                     }
                 }
 
-                detailPropertyLoader.Value.LoadDetailProperties<TEntity>(entity, table, row, loadNavigationProps, connection);
+                detailPropertyLoader.Value.LoadDetailProperties<TEntity>(entity, table, row, recursiveLoad, connection);
 
                 return (TEntity)entity;
             });
@@ -88,9 +88,9 @@ public class EntityDetailGetter : IEntityDetailGetter
         throw new InvalidDataContractException($"Type {entityTypeName} is not mapped in the schema.");
     }
     
-    private Lazy<TDetails> GetDetailsFromNewQuery<TTable, TDetails>(TTable record, bool loadNavigationProps, ISqliteConnection connection) where TDetails : new()
+    private Lazy<TDetails> GetDetailsFromNewQuery<TTable, TDetails>(TTable record, bool recursiveLoad, ISqliteConnection connection) where TDetails : new()
     {
-        if (!loadNavigationProps || connection is null)
+        if (!recursiveLoad || connection is null)
         {
             return new Lazy<TDetails>(default(TDetails));
         }
@@ -106,7 +106,7 @@ public class EntityDetailGetter : IEntityDetailGetter
         ISqliteConnection connection) where TDetailEntity : new()
     {
         // Initialize the queryable recursively, then build an expression in code to filter the results to the current record.
-        var queryable = entityGetter.Value.Get<TDetailEntity>(connection, loadNavigationProps: true);
+        var queryable = entityGetter.Value.Get<TDetailEntity>(connection, recursiveLoad: true);
         var entityType = typeof(TEntity);
         var entityTypeName = entityType.AssemblyQualifiedName;
         var detailEntityType = typeof(TDetailEntity);

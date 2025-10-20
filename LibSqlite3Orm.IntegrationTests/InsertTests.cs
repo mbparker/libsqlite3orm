@@ -160,7 +160,7 @@ public class InsertTests : IntegrationTestBase<TestDbContext>
         Assert.That(linkEntity.Id, Is.Not.Null);
 
         var actual = Orm
-            .Get<TestEntityTagLink>(loadNavigationProps: true)
+            .Get<TestEntityTagLink>(recursiveLoad: true)
             .Where(x => x.Id == linkEntity.Id)
             .SingleRecord();
         

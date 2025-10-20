@@ -87,7 +87,7 @@ public class UpsertTests : IntegrationTestSeededBase<TestDbContext>
         Assert.That(ret, Is.EqualTo(UpsertResult.Updated));
         
         var actual = Orm
-            .Get<TestEntityTagLink>(loadNavigationProps: true)
+            .Get<TestEntityTagLink>(recursiveLoad: true)
             .Where(x => x.Id == linkEntity.Id)
             .SingleRecord();
         
@@ -109,7 +109,7 @@ public class UpsertTests : IntegrationTestSeededBase<TestDbContext>
         Assert.That(ret, Is.EqualTo(UpsertResult.Inserted));
         
         var actual = Orm
-            .Get<TestEntityTagLink>(loadNavigationProps: true)
+            .Get<TestEntityTagLink>(recursiveLoad: true)
             .Where(x => x.Id == linkEntity.Id)
             .SingleRecord();
         
