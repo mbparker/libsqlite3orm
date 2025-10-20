@@ -21,6 +21,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -51,13 +53,6 @@ jobs:
         TMPDIR: ${{ runner.temp }}
         TMP: ${{ runner.temp }}
         TEMP: ${{ runner.temp }}
-
-    - name: Upload build artifacts (Ubuntu only)
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
-      with:
-        name: nuget-package
-        path: LibSqlite3Orm/bin/Release/*.nupkg
 
   publish:
     name: Publish NuGet Package
