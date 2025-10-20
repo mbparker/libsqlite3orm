@@ -39,7 +39,7 @@ jobs:
       uses: gittools/actions/gitversion/execute@v4
 
     - name: Print Semver
-      run: echo ${{ steps.gitversion.outputs.SemVer }}
+      run: echo ${{ steps.gitversion.outputs.MajorMinorPatch }}
 
     - name: Restore dependencies
       run: dotnet restore
@@ -90,7 +90,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Pack
-      run: dotnet pack LibSqlite3Orm/LibSqlite3Orm.csproj --configuration Release --no-build /p:Version=${{ steps.gitversion.outputs.SemVer }} --output ./nupkg     
+      run: dotnet pack LibSqlite3Orm/LibSqlite3Orm.csproj --configuration Release --no-build /p:Version=${{ steps.gitversion.outputs.MajorMinorPatch }} --output ./nupkg     
 
     - name: NuGet login (OIDC → temp API key)
       uses: NuGet/login@v1
