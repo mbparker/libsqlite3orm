@@ -92,6 +92,14 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     private ISqliteConnection connection;
     private IOrmGenerativeLogicTracer logicTracer;
     
+    public static readonly List<string> WordList = new()
+    {
+        "apple", "banana", "orange", "grape", "strawberry",
+        "cat", "dog", "bird", "fish", "rabbit",
+        "happy", "sad", "angry", "calm", "excited",
+        "run", "jump", "sleep", "eat", "drink"
+    };
+    
     protected Random Rng { get; } =  new(Environment.TickCount);
     protected ISqliteObjectRelationalMapper<TContext> Orm { get; private set; }
     protected bool EnableLogicTracing { get; set; }
@@ -105,6 +113,15 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         logicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
         
         connection = Resolve<Func<ISqliteConnection>>()();
+        // This is required because we use the same WHERE filter expression for both the DB SELECT
+        // and the Linq Where call when getting expected data.
+        // The Where method in Linq will do case-sensitive compares whereas Sqlite will perform
+        // LIKE compares in a case-insensitive fashion. If this is set to false, some tests will fail because
+        // the filter expression will return different results between in-memory expected data and DB queries.
+        connection.CaseSensitiveLike = true;
+        // This currently defaults to true already, but in case that changes, just set it anyway.
+        // It's required for the delete tests.
+        connection.ForeignKeysEnforced = true;        
         connection.OpenInMemory();
         
         using (var dbManager = Resolve<Func<ISqliteObjectRelationalMapperDatabaseManager<TContext>>>().Invoke())
@@ -376,14 +393,6 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
 
         return randomDate;
     }
-    
-    private static readonly List<string> WordList = new()
-    {
-        "apple", "banana", "orange", "grape", "strawberry",
-        "cat", "dog", "bird", "fish", "rabbit",
-        "happy", "sad", "angry", "calm", "excited",
-        "run", "jump", "sleep", "eat", "drink"
-    };
     
     private string GenerateRandomStringWithWords(int numberOfWords)
     {

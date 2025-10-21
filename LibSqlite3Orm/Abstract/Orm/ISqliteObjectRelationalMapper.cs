@@ -6,6 +6,7 @@ namespace LibSqlite3Orm.Abstract.Orm;
 public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TContext : ISqliteOrmDatabaseContext
 {
     TContext Context { get; }
+    ISqliteConnection Connection { get; }
     
     void UseConnection(ISqliteConnection connection);
 

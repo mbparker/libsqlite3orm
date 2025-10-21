@@ -15,9 +15,13 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	private readonly StringBuilder sqlBuilder = new();
 	private readonly List<string> currentConstArrayValues = [];
 	private string currentMemberDbFieldName;
-	private string currentMethodCall;
 	private object currentConstValue;
-	private bool inContainsCall;
+	private bool inArrayContainsCall;
+	private bool inStringContainsCall;
+	private bool inToLowerCall;
+	private bool inToUpperCall;
+	private bool inEndsWithCall;
+	private bool inStartsWithCall;
 	private SqliteDbSchemaTable table;
 
 	public SqliteWhereClauseBuilder(IOrmGenerativeLogicTracer generativeLogicTracer, SqliteDbSchema schema)
@@ -136,13 +140,23 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			if (BuildingLikeStatement())
 			{
 				sqlBuilder.Append(" LIKE ");
-				if (currentMethodCall.EndsWith(nameof(string.Contains)))
+				if (inToLowerCall || inToUpperCall)
+				{
+					sqlBuilder.Append(inToLowerCall ? "LOWER(" :  "UPPER(");
+				}
+				if (inStringContainsCall)
 					sqlBuilder.Append($"'%{c.Value}%'");
-				else if (currentMethodCall.EndsWith(nameof(string.StartsWith)))
+				else if (inStartsWithCall)
 					sqlBuilder.Append($"'{c.Value}%'");
-				else if (currentMethodCall.EndsWith(nameof(string.EndsWith)))
+				else if (inEndsWithCall)
 					sqlBuilder.Append($"'%{c.Value}'");
+				if (inToLowerCall || inToUpperCall)
+				{
+					sqlBuilder.Append(')');
+					inToLowerCall = inToUpperCall = false;
+				}
 				currentMemberDbFieldName = null;
+				inStringContainsCall = inStartsWithCall = inEndsWithCall = false;
 			}
 			else if (NeedToParameterizeValue())
 			{
@@ -226,9 +240,9 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			}
 			else 
 			{
-				if (inContainsCall && ArrayValuesBuilt())
+				if (inArrayContainsCall && ArrayValuesBuilt())
 				{
-					inContainsCall = false;
+					inArrayContainsCall = false;
 					currentConstArrayValues.Clear();
 					currentConstValue = null;
 				}
@@ -236,7 +250,16 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 				{
 					if (currentConstValue is not null)
 						throw new InvalidExpressionException($"Unhandled member access: {m.Member.Name}");
+					if (inToLowerCall || inToUpperCall)
+					{
+						sqlBuilder.Append(inToLowerCall ? "LOWER(" :  "UPPER(");
+					}
 					sqlBuilder.Append(memberDbField);
+					if (inToLowerCall || inToUpperCall)
+					{
+						sqlBuilder.Append(')');
+						inToLowerCall = inToUpperCall = false;
+					}
 					currentMemberDbFieldName = memberDbField;
 				}
 			}
@@ -305,11 +328,24 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	{
 		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(() =>
 		{
-			currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
+			var currentMethodCall = $"{mc.Method.DeclaringType?.AssemblyQualifiedName}.{mc.Method.Name}";
 			return $"[Parsing Expression] Visiting Method Call: {currentMethodCall}";
 		}));
-		if (mc.Method.Name == "Contains")
-			inContainsCall = true;
+		if (mc.Method.Name == nameof(string.Contains))
+		{
+			if (mc.Method.DeclaringType == typeof(string))
+				inStringContainsCall = true;
+			else
+				inArrayContainsCall = true;
+		}
+		else if (mc.Method.Name == nameof(string.ToLower))
+			inToLowerCall = true;
+		else if (mc.Method.Name == nameof(string.ToUpper))
+			inToUpperCall = true;
+		else if (mc.Method.Name == nameof(string.StartsWith))
+			inStartsWithCall = true;
+		else if (mc.Method.Name == nameof(string.EndsWith))
+			inEndsWithCall = true;
 		return base.VisitMethodCall(mc);
 	}
 	
@@ -320,9 +356,13 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 		sqlBuilder.Clear();
 		currentConstArrayValues.Clear();
 		currentMemberDbFieldName = null;
-		currentMethodCall = null;
 		currentConstValue = null;
-		inContainsCall = false;
+		inStringContainsCall = false;
+		inArrayContainsCall = false;
+		inToLowerCall = false;
+		inToUpperCall = false;
+		inEndsWithCall = false;
+		inStartsWithCall = false;
 		table = null;
 	}
 
@@ -333,7 +373,7 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 
 	private bool BuildingInClause()
 	{
-		return inContainsCall && currentConstValue is not null && currentConstValue.GetType().IsArray;
+		return inArrayContainsCall && currentConstValue is not null && currentConstValue.GetType().IsArray;
 	}
 	
 	private bool ArrayValuesBuilt()
@@ -343,10 +383,8 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 
 	private bool BuildingLikeStatement()
 	{
-		var strName = typeof(string).AssemblyQualifiedName;
-		return currentMethodCall == $"{strName}.{nameof(string.Contains)}" ||
-		       currentMethodCall == $"{strName}.{nameof(string.StartsWith)}" ||
-		       currentMethodCall == $"{strName}.{nameof(string.EndsWith)}";
+		return (inStringContainsCall && (currentConstValue is null || !currentConstValue.GetType().IsArray)) ||
+		       inStartsWithCall || inEndsWithCall;
 	}
 
 	private string GetDbFieldNameForMemberName(string memberName)

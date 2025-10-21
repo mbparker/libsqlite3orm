@@ -28,6 +28,8 @@ public class SqliteConnectionReference : ISqliteConnection
     public SqliteOpenFlags ConnectionFlags => connection.ConnectionFlags;
     public string VirtualFileSystemName => connection.VirtualFileSystemName;
     public string Filename => connection.Filename;
+    public bool CaseSensitiveLike { get => connection.CaseSensitiveLike; set => connection.CaseSensitiveLike = value; }
+    public bool ForeignKeysEnforced { get => connection.ForeignKeysEnforced; set => connection.ForeignKeysEnforced = value; }
 
     public void Open(string filename, SqliteOpenFlags flags, string virtualFileSystemName = null)
     {

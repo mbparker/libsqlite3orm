@@ -23,11 +23,12 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
         this.entityServicesFactory = entityServicesFactory;
     }
     
-    private ISqliteConnection Connection {
+    public ISqliteConnection Connection {
         get
         {
             if (_connection == null)
-                throw new InvalidOperationException("Connection not set.");
+                throw new InvalidOperationException(
+                    $"You must call {nameof(UseConnection)} prior to invoking any other calls that require a DB connection.");
             return _connection;
         }
         set => _connection = value;

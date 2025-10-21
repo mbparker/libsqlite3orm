@@ -11,6 +11,8 @@ public class SqliteConnection : ISqliteConnection
     private readonly Func<ISqliteConnection, ISqliteTransaction> transactionFactory;
     private readonly List<ISqliteTransaction> transactionStack = new(); // Can't be an actual stack object.
     private IntPtr dbHandle;
+    private bool caseSensitiveLike;
+    private bool foreignKeysEnforced = true;
     private bool disposed;
     
     public SqliteConnection(Func<ISqliteConnection, ISqliteCommand> commandFactory,
@@ -40,6 +42,28 @@ public class SqliteConnection : ISqliteConnection
     
     public string Filename { get; private set; }
 
+    public bool CaseSensitiveLike
+    {
+        get => caseSensitiveLike;
+        set 
+        { 
+            caseSensitiveLike = value;
+            if (Connected)
+                SetCaseSensitiveLike(caseSensitiveLike);
+        }
+    }
+    
+    public bool ForeignKeysEnforced
+    {
+        get => foreignKeysEnforced;
+        set 
+        { 
+            foreignKeysEnforced = value;
+            if (Connected)
+                SetForeignKeyEnforcement(foreignKeysEnforced);
+        }
+    }
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
@@ -57,6 +81,9 @@ public class SqliteConnection : ISqliteConnection
         if (ret != SqliteResult.OK)
             throw new SqliteException(ret, $"Cannot open database '{filename}', Code: {ret:X}");
         Filename = filename;
+        // Both of these default to false/off to be consistent with official raw SQLite native lib behavior. 
+        SetCaseSensitiveLike(CaseSensitiveLike);
+        SetForeignKeyEnforcement(ForeignKeysEnforced);
     }
 
     public void OpenReadWrite(string filename, bool mustExist)
@@ -123,6 +150,24 @@ public class SqliteConnection : ISqliteConnection
     }
 
     public ISqliteConnection GetReference() => new SqliteConnectionReference(this);
+
+    private void Pragma(string name, bool enabled)
+    {
+        if (!Connected) throw new InvalidOperationException($"You must call {nameof(Open)} before calling {nameof(Pragma)}.");
+        var onOffStr = enabled ? "ON" : "OFF";
+        using (var cmd = CreateCommand())
+            cmd.ExecuteNonQuery($"PRAGMA {name} = {onOffStr};");
+    }
+    
+    private void SetCaseSensitiveLike(bool enabled)
+    {
+        Pragma("case_sensitive_like", enabled);
+    }
+    
+    private void SetForeignKeyEnforcement(bool enabled)
+    {
+        Pragma("foreign_keys", enabled);
+    }
 
     private void Dispose(bool disposing)
     {

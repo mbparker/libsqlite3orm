@@ -65,6 +65,75 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             });        
     }
     
+    [TestCaseSource(nameof(StringValuesTestCaseSource))]
+    public void Get_WhenFilterOnStringContains_ReturnsCorrectRecordSet(bool recursiveLoad, string value)
+    {
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => x.StringValue.Contains(value), x => x.Id, (actual, expected) =>
+            {
+                if (recursiveLoad)
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                else
+                    Assert.That(actual.Tags.Value, Is.Null);
+            });        
+    }
+    
+    [TestCaseSource(nameof(StringValuesTestCaseSource))]
+    public void Get_WhenFilterOnStringDoesNotContain_ReturnsCorrectRecordSet(bool recursiveLoad, string value)
+    {
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => !x.StringValue.Contains(value), x => x.Id, (actual, expected) =>
+            {
+                if (recursiveLoad)
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                else
+                    Assert.That(actual.Tags.Value, Is.Null);
+            });        
+    }
+    
+    [TestCaseSource(nameof(StringValuesTestCaseSource))]
+    public void Get_WhenFilterOnStringStartsWith_ReturnsCorrectRecordSet(bool recursiveLoad, string value)
+    {
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => x.StringValue.StartsWith(value), x => x.Id, (actual, expected) =>
+            {
+                if (recursiveLoad)
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                else
+                    Assert.That(actual.Tags.Value, Is.Null);
+            });        
+    }
+    
+    [TestCaseSource(nameof(StringValuesTestCaseSource))]
+    public void Get_WhenFilterOnStringEndsWith_ReturnsCorrectRecordSet(bool recursiveLoad, string value)
+    {
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => x.StringValue.EndsWith(value), x => x.Id, (actual, expected) =>
+            {
+                if (recursiveLoad)
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                else
+                    Assert.That(actual.Tags.Value, Is.Null);
+            });        
+    }
+    
+    [TestCaseSource(nameof(StringValuesTestCaseSource))]
+    public void Get_WhenFilterOnStringEndsWithLowerButCompareValueIsUpper_ReturnsEmptyRecordSet(bool recursiveLoad, string value)
+    {
+        var count = 0;
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => x.StringValue.ToLower().EndsWith(value.ToUpper()), x => x.Id, (actual, expected) =>
+            {
+                count++;
+                if (recursiveLoad)
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                else
+                    Assert.That(actual.Tags.Value, Is.Null);
+            });    
+        
+        Assert.That(count, Is.EqualTo(0));
+    }    
+    
     [TestCase(false, 1, 10)]
     [TestCase(false, 11, 30)]
     [TestCase(true, 1, 10)]
@@ -131,5 +200,14 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             Assert.That(actualTagLink.Entity.Value, Is.Not.Null);
             AssertThatRecordsMatch(actualTagLink.Entity.Value, SeededMasterRecords[expectedTagLink.EntityId]);
         }        
+    }
+    
+    private static IEnumerable<object[]> StringValuesTestCaseSource()
+    {
+        foreach (var word in WordList)
+        {
+            yield return [false, word];
+            yield return [true, word];
+        }
     }
 }
