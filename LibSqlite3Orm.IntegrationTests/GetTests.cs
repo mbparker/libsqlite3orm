@@ -9,15 +9,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void Get_WhenNoWhereClauseAndNotRecursive_ReturnsAllRecordsWithoutNavigationProps()
     {
-        var actual = Orm
-            .Get<TestEntityMaster>()
-            .OrderBy(x => x.Id)
-            .AllRecords();
-
         var expected = SeededMasterRecords
             .Values
             .OrderBy(x => x.Id)
             .ToArray();
+        
+        var actual = Orm
+            .Get<TestEntityMaster>()
+            .OrderBy(x => x.Id)
+            .AllRecords();
         
         Assert.That(actual.Length, Is.EqualTo(expected.Length));
         for (var i = 0; i < expected.Length; i++)
@@ -41,7 +41,6 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             .AllRecords();
         
         Assert.That(actual.Length, Is.EqualTo(expected.Length));
-
         for (var i = 0; i < expected.Length; i++)
         {
             AssertThatRecordsMatch(actual[i], expected[i]);

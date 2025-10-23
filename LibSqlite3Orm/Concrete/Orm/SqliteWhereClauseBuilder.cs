@@ -2,6 +2,7 @@ using System.Collections;
 using System.Data;
 using System.Linq.Expressions;
 using System.Text;
+using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
 
@@ -9,6 +10,7 @@ namespace LibSqlite3Orm.Concrete.Orm;
 
 public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBuilder
 {
+	private readonly ISqliteFieldValueSerialization valueSerialization;
 	private readonly IOrmGenerativeLogicTracer generativeLogicTracer;
 	private readonly SqliteDbSchema schema;
 	private readonly Dictionary<string, ExtractedParameter> extractedParameters = new(StringComparer.OrdinalIgnoreCase);
@@ -24,8 +26,10 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 	private bool inStartsWithCall;
 	private SqliteDbSchemaTable table;
 
-	public SqliteWhereClauseBuilder(IOrmGenerativeLogicTracer generativeLogicTracer, SqliteDbSchema schema)
+	public SqliteWhereClauseBuilder(ISqliteFieldValueSerialization valueSerialization,
+		IOrmGenerativeLogicTracer generativeLogicTracer, SqliteDbSchema schema)
 	{
+		this.valueSerialization = valueSerialization;
 		this.generativeLogicTracer = generativeLogicTracer;
 		this.schema = schema;
 	}
@@ -137,7 +141,8 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 		}
 		else if (q == null)
 		{
-			if (BuildingLikeStatement())
+			var valueType = c.Value.GetType();
+			if (Type.GetTypeCode(valueType) == TypeCode.String && BuildingLikeStatement())
 			{
 				sqlBuilder.Append(" LIKE ");
 				if (inToLowerCall || inToUpperCall)
@@ -167,30 +172,31 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			}
 			else
 			{
-				switch (Type.GetTypeCode(c.Value.GetType()))
+				if (Type.GetTypeCode(valueType) == TypeCode.Object)
+					currentConstValue = c.Value;
+				else if (Type.GetTypeCode(valueType) == TypeCode.String)
 				{
-					case TypeCode.Boolean:
-						sqlBuilder.Append(((bool)c.Value) ? 1 : 0);
-						break;
-
-					case TypeCode.String:
-						sqlBuilder.Append("'");
+					sqlBuilder.Append('\'');
+					sqlBuilder.Append(c.Value);
+					sqlBuilder.Append('\'');
+				}
+				else
+				{
+					var serializedValue = SerializeConstantValue(c.Value, valueType);
+					if (serializedValue is null)
+					{
+						// Value does not have a serializer registered. Just write it out as is.
 						sqlBuilder.Append(c.Value);
-						sqlBuilder.Append("'");
-						break;
-
-					case TypeCode.DateTime:
-						sqlBuilder.Append("'");
-						sqlBuilder.Append(c.Value);
-						sqlBuilder.Append("'");
-						break;
-
-					case TypeCode.Object:
-						currentConstValue = c.Value;
-						break;
-					default:
-						sqlBuilder.Append(c.Value);
-						break;
+					}
+					else if (serializedValue is string)
+					{
+						// Original value was transformed to a string, so enclose it in single quotes.
+						sqlBuilder.Append('\'');
+						sqlBuilder.Append(serializedValue);
+						sqlBuilder.Append('\'');
+					}
+					else
+						sqlBuilder.Append(serializedValue);
 				}
 			}
 		}
@@ -423,4 +429,11 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 		generativeLogicTracer.NotifyWhereClauseBuilderVisit(new Lazy<string>(() => $"[Parsing Expression] Parameter extracted: {currentMemberDbFieldName} - {name} = {value} ({value.GetType().AssemblyQualifiedName})"));
 		return name;
 	}
+	
+	private object SerializeConstantValue(object value, Type valueType)
+	{
+        ArgumentNullException.ThrowIfNull(value);
+        var serializer = valueSerialization[valueType];
+		return serializer?.Serialize(value);
+	}	
 }
