@@ -127,7 +127,7 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenContainsCall_ReturnsExpectedResults()
     {
-        var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue
+        var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 1).StringValue
             .Split(' ');
         var expected = SeededMasterRecords.Values.Where(x => x.StringValue.Contains(firstWords[0])).ToArray();
         
@@ -140,7 +140,7 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenStartsWithCall_ReturnsExpectedResults()
     {
-        var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue
+        var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 1).StringValue
             .Split(' ');        
         var expected = SeededMasterRecords.Values.Where(x => x.StringValue.StartsWith(firstWords[0])).ToArray();
         
@@ -153,11 +153,11 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenEndsWithCall_ReturnsExpectedResults()
     {
-        var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue
+        var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 1).StringValue
             .Split(' ');         
-        var expected = SeededMasterRecords.Values.Where(x => x.StringValue.EndsWith(firstWords[0])).ToArray();
+        var expected = SeededMasterRecords.Values.Where(x => x.StringValue.EndsWith(firstWords[^1])).ToArray();
         
-        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=endswith(stringValue, '{firstWords[0]}')");
+        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=endswith(stringValue, '{firstWords[^1]}')");
         
         Assert.That(actual.Entities, Is.Not.Empty);
         Assert.That(actual.Entities.Count(), Is.EqualTo(expected.Length));
@@ -166,7 +166,7 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenToLowerCall_ReturnsExpectedResults()
     {
-        var firstValue = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue.ToLower();
+        var firstValue = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 1).StringValue.ToLower();
         var expected = SeededMasterRecords.Values.Where(x => x.StringValue.ToLower() == firstValue).ToArray();
         
         var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=toLower(stringValue) eq '{firstValue}'");
@@ -178,7 +178,7 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenToUpperCall_ReturnsExpectedResults()
     {
-        var firstValue = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue.ToUpper();
+        var firstValue = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 1).StringValue.ToUpper();
         var expected = SeededMasterRecords.Values.Where(x => x.StringValue.ToUpper() == firstValue).ToArray();
         
         var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=toUpper(stringValue) eq '{firstValue}'");
@@ -190,7 +190,7 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenToUpperAndContainsCalls_ReturnsExpectedResults()
     {
-        var firstValue = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue;
+        var firstValue = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 1).StringValue;
         var expected = SeededMasterRecords.Values.Where(x => x.StringValue.ToUpper().Contains(firstValue.ToUpper())).ToArray();
         
         var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=contains(toUpper(stringValue), toUpper('{firstValue}'))");
