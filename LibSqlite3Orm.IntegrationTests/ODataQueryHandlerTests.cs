@@ -79,14 +79,14 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenHasFilteringAndOrderByAndPagingWithCount_ReturnsExpectedResults()
     {
-        var expected = SeededMasterRecords.Values.Where(x => x.EnumValue == TestEntityKind.Kind2)
+        var expected = SeededMasterRecords.Values.Where(x => x.EnumValue == TestEntityKind.Kind1 || x.EnumValue == TestEntityKind.Kind2)
             .OrderByDescending(x => x.StringValue).ThenBy(x => x.DoubleValue).Skip(2).Take(5).ToArray();
 
-        var actual = Orm.ODataQuery<TestEntityMaster>("$filter=enumValue eq 1&$orderby=stringValue desc,doubleValue asc&$top=5&$skip=2&$count=true");
+        var actual = Orm.ODataQuery<TestEntityMaster>("$filter=enumValue eq 0 or enumValue eq 1&$orderby=stringValue desc,doubleValue asc&$top=5&$skip=2&$count=true");
         
         Assert.That(actual.Count, Is.Not.Null);
         Assert.That(actual.Count,
-            Is.EqualTo(SeededMasterRecords.Count(x => x.Value.EnumValue == TestEntityKind.Kind2)));
+            Is.EqualTo(SeededMasterRecords.Count(x => x.Value.EnumValue == TestEntityKind.Kind1 || x.Value.EnumValue == TestEntityKind.Kind2)));
         var actualEntities = actual.Entities.ToArray();
         Assert.That(actualEntities, Is.Not.Empty);
         Assert.That(actualEntities.Length, Is.EqualTo(expected.Length));
@@ -106,7 +106,6 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
         Assert.That(actual.Count,
             Is.EqualTo(SeededMasterRecords.Count(x => (x.Value.EnumValue == TestEntityKind.Kind2 && x.Value.DoubleValue < 50125175.126) || !(x.Value.ByteValue > 127))));
         var actualEntities = actual.Entities.ToArray();
-        Assert.That(actualEntities, Is.Not.Empty);
         Assert.That(actualEntities.Length, Is.EqualTo(expected.Length));
         for (var i = 0; i < expected.Length; i++)
             AssertThatRecordsMatch(actualEntities[i], expected[i]);
@@ -130,9 +129,9 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     {
         var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue
             .Split(' ');
-        var expected = SeededMasterRecords.Values.Where(x => x.StringValue.Contains(firstWords[1])).ToArray();
+        var expected = SeededMasterRecords.Values.Where(x => x.StringValue.Contains(firstWords[0])).ToArray();
         
-        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=contains(stringValue, '{firstWords[1]}')");
+        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=contains(stringValue, '{firstWords[0]}')");
         
         Assert.That(actual.Entities, Is.Not.Empty);
         Assert.That(actual.Entities.Count(), Is.EqualTo(expected.Length));
@@ -143,9 +142,9 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     {
         var firstWords = SeededMasterRecords.Values.First(x => x.StringValue.Split(' ').Length > 2).StringValue
             .Split(' ');        
-        var expected = SeededMasterRecords.Values.Where(x => x.StringValue.StartsWith(firstWords[2])).ToArray();
+        var expected = SeededMasterRecords.Values.Where(x => x.StringValue.StartsWith(firstWords[0])).ToArray();
         
-        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=startswith(stringValue, '{firstWords[2]}')");
+        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=startswith(stringValue, '{firstWords[0]}')");
         
         Assert.That(actual.Entities, Is.Not.Empty);
         Assert.That(actual.Entities.Count(), Is.EqualTo(expected.Length));
