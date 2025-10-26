@@ -21,28 +21,11 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
-
-    - name: Determine Version with GitVersion
-      if: runner.os == 'Linux'
-      uses: gittools/actions/gitversion/setup@v4
-      with:
-        versionSpec: '6.x'
-        
-    - name: Use GitVersion
-      if: runner.os == 'Linux'
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v4
-
-    - name: Print Calculated Version
-      if: runner.os == 'Linux'
-      run: echo ${{ steps.gitversion.outputs.MajorMinorPatch }}
 
     - name: Restore dependencies
       run: dotnet restore
@@ -64,25 +47,12 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0      
+      uses: actions/checkout@v4  
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
-
-    - name: Determine Version with GitVersion
-      uses: gittools/actions/gitversion/setup@v4
-      with:
-        versionSpec: '6.x'
-        
-    - name: Use GitVersion
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v4
-      with:
-        updateProjectFiles: true      
+        dotnet-version: '9.0.x'   
 
     - name: Restore dependencies
       run: dotnet restore
@@ -91,7 +61,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Pack
-      run: dotnet pack LibSqlite3Orm/LibSqlite3Orm.csproj --configuration Release --no-build /p:Version=${{ steps.gitversion.outputs.MajorMinorPatch }} --output ./nupkg     
+      run: dotnet pack LibSqlite3Orm/LibSqlite3Orm.csproj --configuration Release --no-build --output ./nupkg     
 
     - name: NuGet login (OIDC → temp API key)
       uses: NuGet/login@v1
