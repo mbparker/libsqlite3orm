@@ -3,10 +3,12 @@ using Autofac.Core;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.EntityServices;
+using LibSqlite3Orm.Abstract.Orm.OData;
 using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Concrete;
 using LibSqlite3Orm.Concrete.Orm;
 using LibSqlite3Orm.Concrete.Orm.EntityServices;
+using LibSqlite3Orm.Concrete.Orm.OData;
 using LibSqlite3Orm.Concrete.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Models.Orm;
 using LibSqlite3Orm.Types.Orm;
@@ -60,6 +62,7 @@ public class ContainerModule : Module
         builder.RegisterType<EntityServices>().As<IEntityServices>().InstancePerDependency();
         builder.RegisterType<SqliteEntityWriter>().As<ISqliteEntityWriter>().InstancePerDependency(); // Can't be a singleton anymore
         builder.RegisterType<SqliteDetailPropertyLoader>().As<ISqliteDetailPropertyLoader>().InstancePerDependency();
+        builder.RegisterType<ODataQueryHandler>().As<IODataQueryHandler>().InstancePerDependency();
 
         builder.RegisterType<SqliteDbSchemaBuilder>();
         builder.RegisterGeneric(typeof(SqliteObjectRelationalMapperDatabaseManager<>)).As(typeof(ISqliteObjectRelationalMapperDatabaseManager<>))

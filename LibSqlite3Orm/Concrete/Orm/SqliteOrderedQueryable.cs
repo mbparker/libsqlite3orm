@@ -92,27 +92,28 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         return this;
     }
 
-    public int Count()
+    public long Count()
     {
         return Count(null);
     }
 
-    public int Count(Expression<Func<T, bool>> predicate)
+    public long Count(Expression<Func<T, bool>> predicate)
     {
+        Expression<Func<T, bool>> effectivePredicate = null;
         if (predicate is not null)
         {
             if (wherePredicate is not null)
-                wherePredicate = Expression.Lambda<Func<T, bool>>(
+                effectivePredicate = Expression.Lambda<Func<T, bool>>(
                     Expression.AndAlso(wherePredicate.Body, predicate.Body),
                     predicate.Parameters);
             else
-                wherePredicate = predicate;
+                effectivePredicate = predicate;
         }
 
         using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                   wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Count, null)))
+                   effectivePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Count, null)))
         {
-            return dataReader.First()[0].ValueAs<int>();
+            return dataReader.First()[0].ValueAs<long>();
         }
     }
 
@@ -200,23 +201,43 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     {
         return New(keySelectorExpr, descending: false);
     }
+    
+    public ISqliteOrderedQueryable<T> OrderBy(Expression keySelectorExpr)
+    {
+        return New(keySelectorExpr, descending: false);
+    }    
 
     public ISqliteOrderedQueryable<T> OrderByDescending<TKey>(Expression<Func<T, TKey>> keySelectorExpr)
     {
         return New(keySelectorExpr, descending: true);
     }
+    
+    public ISqliteOrderedQueryable<T> OrderByDescending(Expression keySelectorExpr)
+    {
+        return New(keySelectorExpr, descending: true);
+    }    
 
     public ISqliteOrderedQueryable<T> ThenBy<TKey>(Expression<Func<T, TKey>> keySelectorExpr)
     {
         return New(keySelectorExpr, descending: false);
     }
+    
+    public ISqliteOrderedQueryable<T> ThenBy(Expression keySelectorExpr)
+    {
+        return New(keySelectorExpr, descending: false);
+    }    
 
     public ISqliteOrderedQueryable<T> ThenByDescending<TKey>(Expression<Func<T, TKey>> keySelectorExpr)
     {
         return New(keySelectorExpr, descending: true);
     }
+    
+    public ISqliteOrderedQueryable<T> ThenByDescending(Expression keySelectorExpr)
+    {
+        return New(keySelectorExpr, descending: true);
+    }    
 
-    private ISqliteOrderedQueryable<T> New<TKey>(Expression<Func<T, TKey>> keySelectorExpr, bool descending)
+    private ISqliteOrderedQueryable<T> New(Expression keySelectorExpr, bool descending)
     {
         return new SqliteOrderedQueryable<T>(schema, executeFunc, modelDeserializerFunc, recursiveLoad,
             wherePredicate, sortSpecs, skipCount, takeCount, new SqliteSortSpec(schema, keySelectorExpr, descending));

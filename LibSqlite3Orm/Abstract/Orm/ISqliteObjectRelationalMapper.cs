@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using LibSqlite3Orm.Models.Orm;
+using LibSqlite3Orm.Models.Orm.OData;
 
 namespace LibSqlite3Orm.Abstract.Orm;
 
@@ -28,4 +29,6 @@ public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TCo
     ISqliteQueryable<T> Get<T>(bool recursiveLoad = false) where T : new();
     int Delete<T>(Expression<Func<T, bool>> predicate);
     int DeleteAll<T>();
+    
+    ODataQueryResult<TEntity> ODataQuery<TEntity>(string odataQuery) where TEntity : new();
 }

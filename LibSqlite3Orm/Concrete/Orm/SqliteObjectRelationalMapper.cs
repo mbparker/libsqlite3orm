@@ -2,7 +2,9 @@ using System.Linq.Expressions;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.EntityServices;
+using LibSqlite3Orm.Abstract.Orm.OData;
 using LibSqlite3Orm.Models.Orm;
+using LibSqlite3Orm.Models.Orm.OData;
 
 namespace LibSqlite3Orm.Concrete.Orm;
 
@@ -11,16 +13,20 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
 {
     private readonly Func<TContext> contextFactory;
     private readonly Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory;
+    private readonly Func<ISqliteOrmDatabaseContext, IODataQueryHandler> odataQueryHandlerFactory;
     private TContext _context;
     private IEntityServices _entityServices;
+    private IODataQueryHandler _odataQueryHandler;
     private ISqliteTransaction _transaction;
     private ISqliteConnection _connection;
 
     public SqliteObjectRelationalMapper(Func<TContext> contextFactory,
-        Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory)
+        Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory,
+        Func<ISqliteOrmDatabaseContext, IODataQueryHandler> odataQueryHandlerFactory)
     {
         this.contextFactory = contextFactory;
         this.entityServicesFactory = entityServicesFactory;
+        this.odataQueryHandlerFactory = odataQueryHandlerFactory;
     }
     
     public ISqliteConnection Connection {
@@ -51,6 +57,16 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
             if (_entityServices is null)
                 _entityServices = entityServicesFactory(Context);
             return _entityServices;
+        }
+    }
+
+    private IODataQueryHandler ODataQueryHandler
+    {
+        get
+        {
+            if (_odataQueryHandler is null)
+                _odataQueryHandler = odataQueryHandlerFactory(Context);
+            return _odataQueryHandler;
         }
     }
 
@@ -182,5 +198,10 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
     public int DeleteAll<T>()
     {
         return EntityServices.DeleteAll<T>(Connection);
+    }
+
+    public ODataQueryResult<TEntity> ODataQuery<TEntity>(string odataQuery) where TEntity : new()
+    {
+        return ODataQueryHandler.ODataQuery<TEntity>(Connection, odataQuery);
     }
 }

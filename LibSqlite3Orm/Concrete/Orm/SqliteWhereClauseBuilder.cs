@@ -311,6 +311,18 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 				Visit(me2);
 				return m;
 			}
+			
+			// x => x.NullableValue.Value
+			if (m.Expression is MemberExpression { Expression: ParameterExpression })
+			{
+				var mMemberType = me.Member.GetValueType();
+				if (mMemberType.IsGenericType && mMemberType.GetGenericTypeDefinition() == typeof(Nullable<>))
+				{
+					currentMemberDbFieldName = GetDbFieldNameForMemberName(me.Member.Name);
+					sqlBuilder.Append(currentMemberDbFieldName);
+					return m;
+				}
+			}			
 
 			if (me.Expression is ParameterExpression pe)
 			{

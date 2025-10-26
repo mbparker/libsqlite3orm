@@ -20,6 +20,7 @@
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="8.4.0" />
+      <PackageReference Include="LibODataParser" Version="1.0.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
       <PackageReference Include="System.IO.Hashing" Version="9.0.10" />
       <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.11" />
