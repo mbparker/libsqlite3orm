@@ -29,9 +29,11 @@ public class TestEntityMaster
     public TimeSpan? TimeSpanValue { get; set; }
     public DateTimeOffset? DateTimeOffsetValue { get; set; }
     public byte[] BlobValue { get; set; }
+    public long? OptionalDetailId { get; set; }
     /// <summary>
     /// NotMapped attribute is recommended for clarity. It is deliberately left off here to ensure the logic
     /// for ignoring Lazy types works as expected.
     /// </summary>
+    public Lazy<TestEntityOptionalDetail> OptionalDetail { get; set; }
     public Lazy<ISqliteQueryable<TestEntityTagLink>> Tags { get; set; }
 }

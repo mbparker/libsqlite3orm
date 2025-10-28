@@ -33,9 +33,10 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
 
             void ReferenceTable(string otherTableName)
             {
-                var isValid = table.NavigationProperties.Any(x =>
-                    x.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToOne &&
-                    x.ForeignKeyTableName == table.Name);
+                var isValid = !string.Equals(otherTableName, table.Name, StringComparison.OrdinalIgnoreCase) &&
+                              table.NavigationProperties.Any(x =>
+                                  x.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToOne &&
+                                  x.ForeignKeyTableName == table.Name);
                 if (isValid)
                     otherTablesReferenced.Add(otherTableName);
             }
@@ -135,6 +136,7 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
             // Join any additional tables
             if (otherTablesReferenced.Any())
             {
+                var joinOnSb = new StringBuilder();
                 foreach (var otherTable in otherTablesReferenced)
                 {
                     var np = table.NavigationProperties.FirstOrDefault(x => x.ReferencedEntityTableName == otherTable);
@@ -145,7 +147,8 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
                             .SingleOrDefault(x => x.Id == np.ForeignKeyId);
                         if (fk is not null)
                         {
-                            var joinOnSb = new StringBuilder();
+                            joinOnSb.Clear();
+                            joinOnSb.Append('(');
                             for (var i = 0; i < fk.KeyFields.Length; i++)
                             {
                                 if (i > 0)
@@ -153,8 +156,9 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
                                 joinOnSb.Append(
                                     $"{fkTable.Name}.{fk.KeyFields[i].TableFieldName} = {otherTable}.{fk.KeyFields[i].ForeignTableFieldName}");
                             }
-
-                            sb.Append($" INNER JOIN {otherTable} ON {joinOnSb}");
+                            joinOnSb.Append(')');
+                            
+                            sb.Append($" LEFT OUTER JOIN {otherTable} ON {joinOnSb}");
                         }
                     }
                 }

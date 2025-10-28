@@ -129,6 +129,7 @@ public class SqliteDbSchemaBuilder
                         fk.ForeignTableModelTypeName = foreignTable.ModelTypeName;
                         fk.UpdateAction = fko.UpdateAction;
                         fk.DeleteAction = fko.DeleteAction;
+                        fk.Optional = fko.Optional;
                         thisTable.ForeignKeys.Add(fk);
                         
                         foreach (var np in fko.NavigationProperties.Values)
@@ -534,6 +535,12 @@ public class SqliteForeignKeyOptionsBuilder<TTable>
     public SqliteForeignKeyOptionsBuilder<TTable> OnDelete(SqliteForeignKeyAction action)
     {
         options.DeleteAction = action;
+        return this;
+    }
+
+    public SqliteForeignKeyOptionsBuilder<TTable> IsOptional(bool optional = true)
+    {
+        options.Optional = optional;
         return this;
     }
 }

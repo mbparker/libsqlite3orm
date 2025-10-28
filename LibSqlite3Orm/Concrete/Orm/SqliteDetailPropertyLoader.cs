@@ -35,6 +35,25 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
             {
                 if (detailsProp.Kind == SqliteDbSchemaTableForeignKeyNavigationPropertyKind.OneToOne)
                 {
+                    var doNotLoad = false;
+                    var fk = table.ForeignKeys.Single(x =>
+                        x.Id == detailsProp.ForeignKeyId);
+                    if (fk.Optional)
+                    {
+                        for (var i = 0; i < fk.KeyFields.Length; i++)
+                        {
+                            var col = row[fk.ForeignTableName + fk.KeyFields[i].ForeignTableFieldName];
+                            if (col is null) break;
+                            if (col.Value() is null)
+                            {
+                                // Optional FK entity is null for this record. This bool will make the details getter return a Lazy<T>(null)
+                                // This is necessary because we don't want a null Lazy<T> - we want its Value property to return the null.
+                                doNotLoad = true;
+                                break;
+                            }
+                        }
+                    }
+
                     var member = entityType.GetMember(detailsProp.PropertyEntityMember).SingleOrDefault();
                     if (member is not null)
                     {
@@ -44,7 +63,7 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
                             var getDetails =
                                 getDetailsGeneric.MakeGenericMethod(entityType, detailEntityType);
                             var detailEntity = getDetails.Invoke(entityDetailGetter.Value,
-                                [entity, recursiveLoad, row, connection]);
+                                [entity, !doNotLoad && recursiveLoad, row, connection]);
                             member.SetValue(entity, detailEntity);
                         }
                     }

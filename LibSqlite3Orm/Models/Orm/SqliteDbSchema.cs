@@ -80,6 +80,7 @@ public class SqliteDbSchemaTableForeignKey
     public string ForeignTableModelTypeName { get; set; }
     public SqliteForeignKeyAction? UpdateAction { get; set; }
     public SqliteForeignKeyAction? DeleteAction { get; set; }
+    public bool Optional { get; set; }
 }
 
 public class SqliteDbSchemaIndex

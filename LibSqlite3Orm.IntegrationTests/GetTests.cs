@@ -45,6 +45,7 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
         {
             AssertThatRecordsMatch(actual[i], expected[i]);
             AssertThatTagLinkRecordsMatch(actual[i], expected[i]);
+            AssertOptionalRecordsMatch(actual[i], expected[i]);
         }
     }
     
@@ -58,9 +59,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             x => x.EnumValue == enumVal, x => x.Id, (actual, expected) =>
             {
                 if (recursiveLoad)
+                {
                     AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
                 else
+                {
                     Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
             });        
     }
     
@@ -71,9 +78,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             x => x.StringValue.Contains(value), x => x.Id, (actual, expected) =>
             {
                 if (recursiveLoad)
+                {
                     AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
                 else
+                {
                     Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
             });        
     }
     
@@ -84,9 +97,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             x => !x.StringValue.Contains(value), x => x.Id, (actual, expected) =>
             {
                 if (recursiveLoad)
+                {
                     AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
                 else
+                {
                     Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
             });        
     }
     
@@ -97,9 +116,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             x => x.StringValue.StartsWith(value), x => x.Id, (actual, expected) =>
             {
                 if (recursiveLoad)
+                {
                     AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
                 else
+                {
                     Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
             });        
     }
     
@@ -110,9 +135,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             x => x.StringValue.EndsWith(value), x => x.Id, (actual, expected) =>
             {
                 if (recursiveLoad)
+                {
                     AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
                 else
+                {
                     Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
             });        
     }
     
@@ -125,9 +156,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             {
                 count++;
                 if (recursiveLoad)
+                {
                     AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
                 else
+                {
                     Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
             });    
         
         Assert.That(count, Is.EqualTo(0));
@@ -143,9 +180,15 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             x => x.Id >= idLow && x.Id <= idHigh, x => x.Id, (actual, expected) =>
             {
                 if (recursiveLoad)
+                {
                     AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
                 else
+                {
                     Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
             });
     }
 
@@ -199,6 +242,22 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             Assert.That(actualTagLink.Entity.Value, Is.Not.Null);
             AssertThatRecordsMatch(actualTagLink.Entity.Value, SeededMasterRecords[expectedTagLink.EntityId]);
         }        
+    }
+
+    private void AssertOptionalRecordsMatch(TestEntityMaster actual, TestEntityMaster expected)
+    {
+        Assert.That(actual.OptionalDetailId, Is.EqualTo(expected.OptionalDetailId));
+        if (expected.OptionalDetailId.HasValue)
+        {
+            var expectedOptionalRecord = SeededOptionalRecords[expected.OptionalDetailId.Value];
+            Assert.That(actual.OptionalDetail.Value, Is.Not.Null);
+            Assert.That(actual.OptionalDetail.Value.Id, Is.EqualTo(expectedOptionalRecord.Id));
+            Assert.That(actual.OptionalDetail.Value.Details, Is.EqualTo(expectedOptionalRecord.Details));
+        }
+        else
+        {
+            Assert.That(actual.OptionalDetail.Value, Is.Null);
+        }
     }
     
     private static IEnumerable<object[]> StringValuesTestCaseSource()

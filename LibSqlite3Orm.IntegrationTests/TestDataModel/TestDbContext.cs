@@ -15,10 +15,21 @@ public class TestDbContext : SqliteOrmDatabaseContext
         var demoEntity = builder.HasTable<TestEntityMaster>();
         demoEntity.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
         demoEntity.WithColumnChanges(x => x.StringValue).UsingCollation();
+        demoEntity
+            .WithForeignKey(x => x.OptionalDetailId)
+            .References<TestEntityOptionalDetail>(x => x.Id)
+            .HasOne(x => x.OptionalDetail)
+            .OnUpdate(SqliteForeignKeyAction.Cascade)
+            .OnDelete(SqliteForeignKeyAction.SetNull)
+            .IsOptional();
         
         var customTag = builder.HasTable<TestEntityTag>();
         customTag.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
         customTag.WithColumnChanges(x => x.TagValue).UsingCollation().IsUnique().IsNotNull();
+        
+        var optionalDetail = builder.HasTable<TestEntityOptionalDetail>();
+        optionalDetail.WithAllMembersAsColumns(x => x.Id).IsAutoIncrement();
+        optionalDetail.WithColumnChanges(x => x.Details).UsingCollation().IsNotNull();    
         
         var customTagLink = builder.HasTable<TestEntityTagLink>();
         customTagLink.WithAllMembersAsColumns(x => x.Id).IsAutoGuid();

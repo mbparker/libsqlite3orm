@@ -13,14 +13,16 @@ public class DeleteTests : IntegrationTestSeededBase<TestDbContext>
         var actualMaster = Orm.Get<TestEntityMaster>().Count();
         var actualLink = Orm.Get<TestEntityTagLink>().Count();
         var actualTag = Orm.Get<TestEntityTag>().Count();
+        var actualOptional = Orm.Get<TestEntityOptionalDetail>().Count();
 
         Assert.That(actualMaster, Is.EqualTo(0));
         Assert.That(actualLink, Is.EqualTo(0));
         Assert.That(actualTag, Is.EqualTo(SeededTagRecords.Count));
+        Assert.That(actualOptional, Is.EqualTo(SeededOptionalRecords.Count));
     }
     
     [Test]
-    public void Delete_WhenInvokedOnMaster_RemovesCorrectMasterAndLinkRecords()
+    public void Delete_WhenInvokedOnMaster_RemovesCorrectMasterAndLinkRecordsButLeavesOptionalRecord()
     {
         var grouping = SeededLinkRecords.Values.GroupBy(x => x.EntityId).First(x => x.Count() > 1);
         var linksForEntity = grouping.ToArray();
@@ -47,9 +49,15 @@ public class DeleteTests : IntegrationTestSeededBase<TestDbContext>
             .Get<TestEntityTagLink>()
             .Where(x => x.EntityId == masterIdToDelete)
             .AllRecords();
+        var actualRemainingOptionalRecord = Orm
+            .Get<TestEntityOptionalDetail>()
+            .Where(x => x.Id == SeededMasterRecords[masterIdToDelete].OptionalDetailId)
+            .SingleRecord();
         
         Assert.That(actualDeletedMasterRecord, Is.Null);
         Assert.That(actualDeletedLinkRecords, Is.Empty);
+        if (SeededMasterRecords[masterIdToDelete].OptionalDetailId.HasValue)
+            Assert.That(actualRemainingOptionalRecord, Is.Not.Null);
     }    
     
     [Test]
@@ -60,10 +68,12 @@ public class DeleteTests : IntegrationTestSeededBase<TestDbContext>
         var actualMaster = Orm.Get<TestEntityMaster>().Count();
         var actualLink = Orm.Get<TestEntityTagLink>().Count();
         var actualTag = Orm.Get<TestEntityTag>().Count();
+        var actualOptional = Orm.Get<TestEntityOptionalDetail>().Count();
 
         Assert.That(actualMaster, Is.EqualTo(SeededMasterRecords.Count));
         Assert.That(actualLink, Is.EqualTo(0));
         Assert.That(actualTag, Is.EqualTo(0));
+        Assert.That(actualOptional, Is.EqualTo(SeededOptionalRecords.Count));
     }
     
     [Test]
@@ -107,9 +117,42 @@ public class DeleteTests : IntegrationTestSeededBase<TestDbContext>
         var actualMaster = Orm.Get<TestEntityMaster>().Count();
         var actualLink = Orm.Get<TestEntityTagLink>().Count();
         var actualTag = Orm.Get<TestEntityTag>().Count();
+        var actualOptional = Orm.Get<TestEntityOptionalDetail>().Count();
 
         Assert.That(actualMaster, Is.EqualTo(SeededMasterRecords.Count));
         Assert.That(actualLink, Is.EqualTo(0));
         Assert.That(actualTag, Is.EqualTo(SeededTagRecords.Count));
-    }      
+        Assert.That(actualOptional, Is.EqualTo(SeededOptionalRecords.Count));
+    }
+    
+    [Test]
+    public void DeleteAll_WhenInvokedOnOptional_RemovesAllOptionalRecordsAndClearsFkOnLinkedMasterRecords()
+    {
+        var optionalRecordIds = SeededOptionalRecords.Keys.ToArray();
+        
+        Orm.DeleteAll<TestEntityOptionalDetail>();
+
+        var actualMaster = Orm.Get<TestEntityMaster>().Count();
+        var actualLink = Orm.Get<TestEntityTagLink>().Count();
+        var actualTag = Orm.Get<TestEntityTag>().Count();
+        var actualOptional = Orm.Get<TestEntityOptionalDetail>().Count();
+
+        Assert.That(actualMaster, Is.EqualTo(SeededMasterRecords.Count));
+        Assert.That(actualLink, Is.EqualTo(SeededLinkRecords.Count));
+        Assert.That(actualTag, Is.EqualTo(SeededTagRecords.Count));
+        Assert.That(actualOptional, Is.EqualTo(0));
+
+        var masterRecordIdsToCheck = SeededMasterRecords.Values
+            .Where(x => optionalRecordIds.Contains(x.OptionalDetailId.GetValueOrDefault())).Select(x => x.Id).ToArray();
+        var masterRecords = Orm
+            .Get<TestEntityMaster>()
+            .Where(x => masterRecordIdsToCheck.Contains(x.Id))
+            .AllRecords();
+        Assert.That(masterRecords, Is.Not.Empty);
+        foreach (var masterRecord in masterRecords)
+        {
+            Assert.That(masterRecord.OptionalDetailId, Is.Null);
+        }
+
+    }  
 }

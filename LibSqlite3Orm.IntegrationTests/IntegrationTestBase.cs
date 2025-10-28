@@ -15,6 +15,7 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
     protected Dictionary<long, TestEntityMaster> SeededMasterRecords { get; } = new();
     protected Dictionary<long, TestEntityTag> SeededTagRecords { get; } = new();
     protected Dictionary<string, TestEntityTagLink> SeededLinkRecords { get; } = new(StringComparer.OrdinalIgnoreCase);
+    protected Dictionary<long, TestEntityOptionalDetail> SeededOptionalRecords { get; } = new();
     
     public override void SetUp()
     {
@@ -30,11 +31,17 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
             SeededTagRecords.Clear();
             SeededLinkRecords.Clear();
             SeededMasterRecords.Clear();
+            SeededOptionalRecords.Clear();
+
+            var detail = new TestEntityOptionalDetail { Details = "Detail Record 1" };
+            Orm.Insert(detail);
+            SeededOptionalRecords.Add(detail.Id, detail);
             
             var cnt = Rng.Next(10, 50);
             for (var i = 0; i < cnt; i++)
             {
                 var entity = CreateTestEntityMasterWithRandomValues();
+                entity.OptionalDetailId = i % 2 == 0 ? detail.Id : null;
                 Orm.Insert(entity);
                 SeededMasterRecords.Add(entity.Id, entity);
             }

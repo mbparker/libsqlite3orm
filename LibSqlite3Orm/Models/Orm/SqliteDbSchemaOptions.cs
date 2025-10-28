@@ -99,6 +99,7 @@ public class SqliteTableForeignKeyOptions
         new(StringComparer.OrdinalIgnoreCase);
     public SqliteForeignKeyAction? UpdateAction { get; set; }
     public SqliteForeignKeyAction? DeleteAction { get; set; }
+    public bool Optional { get; set; }
 }
 
 public class SqliteIndexOptions
