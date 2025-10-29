@@ -19,6 +19,7 @@ public class SqliteDbFactoryTests
     public void SetUp()
     {
         _mockConnection = Substitute.For<ISqliteConnection>();
+        _mockConnection.Connected.Returns(true);
         _mockCommand = Substitute.For<ISqliteCommand>();
         _mockSynthesizer = Substitute.For<ISqliteDdlSqlSynthesizer>();
         
@@ -53,7 +54,7 @@ public class SqliteDbFactoryTests
     }
 
     [Test]
-    public void Create_WithValidParameters_CreatesCommand()
+    public void Create_WithValidParameters_CreatesCommands()
     {
         // Arrange
         var schema = CreateTestSchema();
@@ -63,7 +64,7 @@ public class SqliteDbFactoryTests
         _dbFactory.Create(schema, _mockConnection);
 
         // Assert
-        _mockConnection.Received(1).CreateCommand();
+        _mockConnection.Received(2).CreateCommand();
     }
 
     [Test]
@@ -92,7 +93,7 @@ public class SqliteDbFactoryTests
         _dbFactory.Create(schema, _mockConnection);
 
         // Assert
-        _mockCommand.Received(1).Dispose();
+        _mockCommand.Received(2).Dispose();
     }
 
     [Test]
