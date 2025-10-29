@@ -6,8 +6,18 @@ namespace LibSqlite3Orm.Models.Orm;
 [Serializable]
 public class SqliteDbSchema
 {
+    public long FormatVersion { get; set; } = OrmConstants.CurrentSchemaFormatVersion;
     public Dictionary<string, SqliteDbSchemaTable> Tables { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, SqliteDbSchemaIndex> Indexes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    
+    public static void ThrowIfIncompatibleWithLibrary(SqliteDbSchema schema)
+    {
+        if (schema.FormatVersion < OrmConstants.OldestCompatibleSchemaFormatVersion)
+            throw new InvalidDataException(
+                $"The database is not compatible with this version of {nameof(LibSqlite3Orm)}.\n\n" +
+                $"Database ORM Schema Format Version: {schema.FormatVersion}\n" +
+                $"Oldest ORM Schema Format Version Supported By Library: {OrmConstants.OldestCompatibleSchemaFormatVersion}");        
+    }
 }
 
 public class SqliteDbSchemaTable

@@ -20,11 +20,23 @@ public class SqliteDbFactory : ISqliteDbFactory
     {
         if (schema is null) throw new ArgumentNullException(nameof(schema));
         if (connection is null) throw new ArgumentNullException(nameof(connection));
+        if (!connection.Connected) throw new InvalidOperationException("The database connection is not open.");
+        if (IsDatabaseAlreadyInitialized(connection)) throw new InvalidOperationException("The database already created and initialized.");
         var sql = SynthesizeCreateTablesAndIndexes(schema);
         using (var cmd = connection.CreateCommand())
         {
             cmd.ExecuteNonQuery(sql);
         }
+    }
+
+    public bool IsDatabaseAlreadyInitialized(ISqliteConnection connection)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.Parameters.Add("TableName", OrmConstants.OrmMigrationsTableName);
+        return
+            cmd.ExecuteScalar<int?>(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = :TableName);") ==
+            1;
     }
 
     private string SynthesizeCreateTablesAndIndexes(SqliteDbSchema schema)

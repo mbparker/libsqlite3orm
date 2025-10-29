@@ -109,6 +109,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     
     protected Random Rng { get; } =  new(Environment.TickCount);
     protected ISqliteObjectRelationalMapper<TContext> Orm { get; private set; }
+    protected ISqliteObjectRelationalMapperDatabaseManager<TContext> DbManager { get; private set; }
     protected bool EnableLogicTracing { get; set; }
 
     [SetUp]
@@ -119,7 +120,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         logicTracer.WhereClauseBuilderVisit += LogicTracerOnWhereClauseBuilderVisit;
         logicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
         
-        connection = Resolve<Func<ISqliteConnection>>()();
+        connection = Resolve<Func<ISqliteConnection>>().Invoke();
         // This is required because we use the same WHERE filter expression for both the DB SELECT
         // and the Linq Where call when getting expected data.
         // The Where method in Linq will do case-sensitive compares whereas Sqlite will perform
@@ -130,12 +131,10 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         // It's required for the delete tests.
         connection.ForeignKeysEnforced = true;        
         connection.OpenInMemory();
-        
-        using (var dbManager = Resolve<Func<ISqliteObjectRelationalMapperDatabaseManager<TContext>>>().Invoke())
-        {
-            dbManager.UseConnection(connection.GetReference());
-            dbManager.CreateDatabase();
-        }
+
+        DbManager = Resolve<Func<ISqliteObjectRelationalMapperDatabaseManager<TContext>>>().Invoke();
+        DbManager.UseConnection(connection.GetReference());
+        DbManager.CreateDatabase();
 
         Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
         Orm.UseConnection(connection.GetReference());

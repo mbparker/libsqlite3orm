@@ -7,7 +7,8 @@ public interface ISqliteObjectRelationalMapperDatabaseManager<TContext> : IDispo
     SqliteDbSchemaChanges DetectedSchemaChanges { get; }
     
     void UseConnection(ISqliteConnection connection);
-    
+
+    bool IsDatabaseInitialized();
     void CreateDatabase();
     bool Migrate();
     void DeleteDatabase();

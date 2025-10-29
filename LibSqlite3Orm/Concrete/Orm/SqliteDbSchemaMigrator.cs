@@ -57,21 +57,16 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         Connection = null;
     }
 
-    public void CreateInitialMigration()
+    public void InitializeOrmState()
     {
         dbFactory.Create(schemaOrm.Context.Schema, Connection);
-        
-        if (GetMostRecentMigration() is null)
-        {
-            var schemaJson = JsonConvert.SerializeObject(modelOrm.Context.Schema, Formatting.Indented);
-            var migration = new SchemaMigration { Timestamp = DateTime.UtcNow, Schema = schemaJson };
-            schemaOrm.Insert(migration);
-        }
+        CreateInitialMigrationIfNeeded();
     }
     
     public SqliteDbSchemaChanges CheckForSchemaChanges()
     {
-        var previousSchema = JsonConvert.DeserializeObject<SqliteDbSchema>(GetMostRecentMigration().Schema);
+        var previousSchema = GetMostRecentSchema();
+        SqliteDbSchema.ThrowIfIncompatibleWithLibrary(previousSchema);
         var newTables = new List<SqliteDbSchemaTable>();
         var removedTables = new List<SqliteDbSchemaTable>();
         var renamedTables = new List<RenamedTable>();
@@ -396,13 +391,38 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
             }
         }
     }
+    
+    private void CreateInitialMigrationIfNeeded()
+    {
+        if (GetMostRecentMigration() is null)
+        {
+            schemaOrm.Insert(CreateNewMigration(modelOrm.Context.Schema));
+        }
+    }  
+    
+    private SqliteDbSchema GetMostRecentSchema()
+    {
+        var schema = GetMostRecentMigration()?.Schema;
+        return schema is not null ? JsonConvert.DeserializeObject<SqliteDbSchema>(schema,
+            GetJsonSerializerSettings()) : null;
+    }      
 
     private SchemaMigration GetMostRecentMigration()
     {
         return schemaOrm.Get<SchemaMigration>()
             .OrderByDescending(x => x.Timestamp)
+            .ThenByDescending(x => x.Id)
             .Take(1)
             .SingleRecord();
+    }
+
+    private SchemaMigration CreateNewMigration(SqliteDbSchema schema)
+    {
+        var schemaJson = JsonConvert.SerializeObject(schema, GetJsonSerializerSettings());
+        return new SchemaMigration
+        {
+            Timestamp = DateTime.UtcNow, Schema = schemaJson
+        };
     }
     
     private void PerformWithoutForeignKeyEnforcement(Action action)
@@ -416,5 +436,14 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         {
             schemaOrm.ExecuteNonQuery("PRAGMA foreign_keys = on;");
         }
-    }    
+    } 
+    
+    private JsonSerializerSettings GetJsonSerializerSettings()
+    {
+        return new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.Indented,
+            DefaultValueHandling = DefaultValueHandling.Populate
+        };
+    }
 }

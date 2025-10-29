@@ -65,6 +65,14 @@ public class SqliteCommand : ISqliteCommand
         return dbReaderFactory(connection, this, statement);
     }
 
+    public T ExecuteScalar<T>(string sql)
+    {
+        using var reader = ExecuteQuery(sql);
+        var row = reader.FirstOrDefault();
+        if (row is null) return default;
+        return row.ColumnCount > 0 ? row[0].ValueAs<T>() : default;
+    }
+
     private int ExecuteNonQuerySingleStatement(string sql)
     {
         try

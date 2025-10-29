@@ -8,4 +8,5 @@ public interface ISqliteCommand : IDisposable
     int ExecuteNonQuery(string sql);
     ISqliteDataReader ExecuteQuery(IEnumerable<string> sql);
     ISqliteDataReader ExecuteQuery(string sql);
+    T ExecuteScalar<T>(string sql);
 }

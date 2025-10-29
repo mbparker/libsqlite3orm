@@ -6,7 +6,7 @@ public interface ISqliteDbSchemaMigrator<TContext> : IDisposable where TContext 
 {
     void UseConnection(ISqliteConnection connection);
     
-    void CreateInitialMigration();
+    void InitializeOrmState();
     SqliteDbSchemaChanges CheckForSchemaChanges();
     void Migrate(SqliteDbSchemaChanges changes);
 }

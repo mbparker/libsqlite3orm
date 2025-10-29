@@ -62,10 +62,15 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
         Connection = null;
     }
 
+    public bool IsDatabaseInitialized()
+    {
+        return dbFactory.IsDatabaseAlreadyInitialized(Connection);
+    }
+
     public void CreateDatabase()
     {
         dbFactory.Create(Context.Schema, Connection);
-        migrator.CreateInitialMigration();
+        migrator.InitializeOrmState();
     }
 
     public bool Migrate()

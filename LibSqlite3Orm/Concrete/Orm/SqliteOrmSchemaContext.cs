@@ -13,9 +13,13 @@ public class SqliteOrmSchemaContext : SqliteOrmDatabaseContext
 
     protected override void BuildSchema(SqliteDbSchemaBuilder builder)
     {
-        var tab = builder.HasTable<SchemaMigration>("_ORM_schema_migrations");
+        var tab = builder.HasTable<SchemaMigration>(OrmConstants.OrmMigrationsTableName);
         tab.WithPrimaryKey(x => x.Id).IsAutoIncrement();
         tab.WithColumn(x => x.Timestamp).IsNotNull();
-        tab.WithColumn(x => x.Schema).IsNotNull();     
+        tab.WithColumn(x => x.Schema).IsNotNull();
+
+        var index = builder.HasIndex<SchemaMigration>(OrmConstants.OrmMigrationsIndexByDateDescName).IsUnique();
+        index.WithColumn(x => x.Timestamp).SortedDescending();
+        index.WithColumn(x => x.Id).SortedDescending();
     }
 }

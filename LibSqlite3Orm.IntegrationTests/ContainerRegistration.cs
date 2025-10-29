@@ -10,6 +10,7 @@ public static class ContainerRegistration
         var builder = new ContainerBuilder();
         builder.RegisterModule<ContainerModule>();
         builder.RegisterType<TestDbContext>().InstancePerDependency();
+        builder.RegisterType<TestDbContextAddedTable>().InstancePerDependency();
         return builder.Build();
     }
 }
