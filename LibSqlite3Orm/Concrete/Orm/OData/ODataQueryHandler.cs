@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
 using LibODataParser;
@@ -64,17 +63,35 @@ public class ODataQueryHandler : IODataQueryHandler
 
     private Expression BuildOrderByKeyMemberExpression(Type entityType, string memberName)
     {
+        var props = memberName.Split('.');
         var param = Expression.Parameter(entityType, "x");
-        return Expression.Lambda(
-            Expression.MakeMemberAccess(Expression.Parameter(entityType, "x"), GetMemberInfo(entityType, memberName)),
-            param);
+        MemberExpression memExp = null;
+        MemberInfo memberInfo = null;
+
+        for (var i = 0; i < props.Length; i++)
+        {
+            if (i == 0)
+            {
+                memberInfo = GetMemberInfo(entityType, props[i]);
+                memExp = Expression.MakeMemberAccess(param, memberInfo);
+            }
+            else
+            {
+                memberInfo = GetMemberInfo(memberInfo.GetValueType(), props[i]);
+                memExp = Expression.MakeMemberAccess(memExp, memberInfo);
+            }
+        }
+
+        var result = Expression.Lambda(memExp, param);
+        Console.WriteLine($"{result}");
+        return result;
     }
 
     private Expression<Func<TEntity, bool>> BuildFilterExpression<TEntity>(FilterExpression filter) where TEntity : new()
     {
         var entityType = typeof(TEntity);
-        var expression = BuildFilterExpression(entityType, filter);
         var param = Expression.Parameter(entityType, "x");
+        var expression = BuildFilterExpression(entityType, filter);
         return Expression.Lambda<Func<TEntity, bool>>(expression, param);
     }
 
@@ -216,18 +233,34 @@ public class ODataQueryHandler : IODataQueryHandler
     
     private MemberExpression BuildPropertyExpression(Type entityType, FilterPropertyExpression expression)
     {
-        var param = Expression.Parameter(entityType, "x");
-        var member = GetMemberInfo(entityType, expression.PropertyName);
-        var memberExp = Expression.MakeMemberAccess(param, member);
-        var memberValueType = member.GetValueType();
+        var props = expression.PropertyName.Split('.');
+        MemberExpression memExp = null;
+        MemberInfo memberInfo = null;
+        
+        for (var i = 0; i < props.Length; i++)
+        {
+            if (i == 0)
+            {
+                memberInfo = GetMemberInfo(entityType, props[i]);
+                memExp = Expression.MakeMemberAccess(Expression.Parameter(entityType, "x"), memberInfo);
+            }
+            else
+            {
+                memberInfo = GetMemberInfo(memberInfo.GetValueType(), props[i]);
+                memExp = Expression.MakeMemberAccess(memExp, memberInfo);
+            }
+        }        
+        
+        var memberValueType = memberInfo.GetValueType();
         if (memberValueType.IsGenericType && memberValueType.GetGenericTypeDefinition() == typeof(Nullable<>))
         {
             // The bool here is of no consequence. Just getting the name of "Value" without hard coding the string.
             var valueProperty = memberValueType.GetProperty(nameof(Nullable<bool>.Value)) ?? throw new InvalidOperationException("Cannot get Value property on Nullable<> type.");
-            return Expression.MakeMemberAccess(memberExp, valueProperty);
+            return Expression.MakeMemberAccess(memExp, valueProperty);
         }
 
-        return memberExp;
+        Console.WriteLine($"{memExp}");
+        return memExp;
     }
     
     private UnaryExpression BuildUnaryExpression(Type entityType, FilterUnaryExpression expression)

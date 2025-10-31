@@ -66,6 +66,8 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
                         var link = new TestEntityTagLink { EntityId = entity.Id, TagId = tagId };
                         Orm.Insert(link);
                         SeededLinkRecords.Add(link.Id, link);
+                        link.Entity = new Lazy<TestEntityMaster>(entity);
+                        link.Tag = new Lazy<TestEntityTag>(SeededTagRecords[tagId]);
                     }
                 }
 

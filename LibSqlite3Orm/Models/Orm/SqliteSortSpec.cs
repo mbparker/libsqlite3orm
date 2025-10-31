@@ -5,14 +5,22 @@ namespace LibSqlite3Orm.Models.Orm;
 
 public class SqliteSortSpec
 {
-    internal SqliteSortSpec(SqliteDbSchema schema, Expression keySelectorExpr, bool descending)
+    internal SqliteSortSpec(SqliteDbSchema schema, Type entityModel, Expression keySelectorExpr, bool descending)
     {
         if (keySelectorExpr is LambdaExpression { Body: MemberExpression me })
         {
-            var tableClass = me.Member.DeclaringType?.AssemblyQualifiedName;
-            if (!string.IsNullOrEmpty(tableClass))
+            var entityModelClass = me.Member.DeclaringType?.AssemblyQualifiedName ?? entityModel.AssemblyQualifiedName;
+            if (!string.IsNullOrEmpty(entityModelClass))
             {
-                var table = schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == tableClass);
+                var memExp = me;
+                while (memExp.Expression is MemberExpression me2)
+                {
+                    memExp = me2;
+                }
+                
+                
+                
+                var table = schema.Tables.Values.SingleOrDefault(x => x.ModelTypeName == entityModelClass);
                 if (table is not null)
                 {
                     TableName = table.Name;

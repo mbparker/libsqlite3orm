@@ -19,6 +19,21 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     }
     
     [Test]
+    public void ODataQuery_WhenFilterByLinkedValue_ReturnsExpectedResult()
+    {
+        var firstTagValue = SeededTagRecords.Values.First().TagValue;
+        var expected = SeededLinkRecords.Values.Where(x => x.Tag.Value.TagValue == firstTagValue).ToArray();
+
+        var actual = Orm.ODataQuery<TestEntityTagLink>($"$filter=tag.value.tagValue eq '{firstTagValue}'");
+        
+        var actualEntities = actual.Entities.ToArray();
+        Assert.That(actualEntities, Is.Not.Empty);
+        Assert.That(actualEntities.Length, Is.EqualTo(expected.Length));
+        for (var i = 0; i < expected.Length; i++)
+            AssertThatRecordsMatch(actualEntities[i], expected[i]);
+    }    
+    
+    [Test]
     public void ODataQuery_WhenFilterByNegatedId_ReturnsExpectedResults()
     {
         var expected = SeededMasterRecords.Values.ToArray();
@@ -45,6 +60,20 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
         for (var i = 0; i < expected.Length; i++)
             AssertThatRecordsMatch(actualEntities[i], expected[i]);
     }
+    
+    [Test]
+    public void ODataQuery_WhenHasComplexOrderBy_ReturnsExpectedResults()
+    {
+        var expected = SeededLinkRecords.Values.OrderByDescending(x => x.Tag.Value?.TagValue).ToArray();
+
+        var actual = Orm.ODataQuery<TestEntityTagLink>("$orderby=tag.value.tagValue desc");
+        
+        var actualEntities = actual.Entities.ToArray();
+        Assert.That(actualEntities, Is.Not.Empty);
+        Assert.That(actualEntities.Length, Is.EqualTo(expected.Length));
+        for (var i = 0; i < expected.Length; i++)
+            AssertThatRecordsMatch(actualEntities[i], expected[i]);
+    }    
     
     [Test]
     public void ODataQuery_WhenHasOrderByAndPaging_ReturnsExpectedResults()
@@ -149,6 +178,19 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
         Assert.That(actual.Entities, Is.Not.Empty);
         Assert.That(actual.Entities.Count(), Is.EqualTo(expected.Length));
     } 
+    
+    [Test]
+    public void ODataQuery_WhenStartsWithCallOnNestedProperty_ReturnsExpectedResults()
+    {
+        var firstWords = SeededTagRecords.Values.First(x => x.TagValue.Split(' ').Length > 1).TagValue
+            .Split(' ');        
+        var expected = SeededLinkRecords.Values.Where(x => x.Tag.Value.TagValue.StartsWith(firstWords[0])).ToArray();
+        
+        var actual = Orm.ODataQuery<TestEntityTagLink>($"$filter=startswith(tag.value.tagValue, '{firstWords[0]}')");
+        
+        Assert.That(actual.Entities, Is.Not.Empty);
+        Assert.That(actual.Entities.Count(), Is.EqualTo(expected.Length));
+    }     
     
     [Test]
     public void ODataQuery_WhenEndsWithCall_ReturnsExpectedResults()

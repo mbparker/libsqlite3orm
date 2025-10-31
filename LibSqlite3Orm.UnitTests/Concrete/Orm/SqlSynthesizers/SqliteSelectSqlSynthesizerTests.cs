@@ -77,10 +77,10 @@ public class SqliteSelectSqlSynthesizerTests
         var constructor = typeof(SqliteSortSpec).GetConstructor(
             BindingFlags.NonPublic | BindingFlags.Instance, 
             null,
-            [typeof(SqliteDbSchema), typeof(Expression), typeof(bool)], 
+            [typeof(SqliteDbSchema), typeof(Type), typeof(Expression), typeof(bool)], 
             null);
         
-        return (SqliteSortSpec)constructor.Invoke([_schema, keySelector, descending]);
+        return (SqliteSortSpec)constructor.Invoke([_schema, typeof(TestEntity), keySelector, descending]);
     }
 
     [Test]

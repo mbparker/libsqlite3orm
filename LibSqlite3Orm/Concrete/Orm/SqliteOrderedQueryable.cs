@@ -240,7 +240,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     private ISqliteOrderedQueryable<T> New(Expression keySelectorExpr, bool descending)
     {
         return new SqliteOrderedQueryable<T>(schema, executeFunc, modelDeserializerFunc, recursiveLoad,
-            wherePredicate, sortSpecs, skipCount, takeCount, new SqliteSortSpec(schema, keySelectorExpr, descending));
+            wherePredicate, sortSpecs, skipCount, takeCount, new SqliteSortSpec(schema, typeof(T), keySelectorExpr, descending));
     }
 
     private class SqliteOrderedEnumerator : IEnumerator<T>
