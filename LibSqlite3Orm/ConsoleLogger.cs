@@ -5,12 +5,6 @@ public static class ConsoleLogger
     private static string filename;
     private static Stream logStream;
     private static StreamWriter logStreamWriter;
-
-    static ConsoleLogger()
-    {
-        Filename = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-            $"{nameof(LibSqlite3Orm)}-ConsoleLog.txt");
-    }
     
     public static string Filename
     {
@@ -39,11 +33,6 @@ public static class ConsoleLogger
                 }
             }
         } 
-    }
-
-    public static void Dispose()
-    {
-        Filename = null;    
     }
     
     public static void WriteLine(string message)
