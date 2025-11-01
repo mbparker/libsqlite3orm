@@ -47,6 +47,7 @@ public class TestDbContext : SqliteOrmDatabaseContext
         
         builder.HasIndex<TestEntityMaster>().WithColumn(x => x.StringValue).UsingCollation().SortedAscending();
         builder.HasIndex<TestEntityTag>().WithColumn(x => x.TagValue).UsingCollation().SortedAscending();
+        builder.HasIndex<TestEntityTag>().WithColumn(x => x.StringValue).UsingCollation().SortedAscending();
         builder.HasIndex<TestEntityTagLink>().WithColumn(x => x.EntityId).UsingCollation().SortedAscending();
         builder.HasIndex<TestEntityTagLink>().WithColumn(x => x.TagId).UsingCollation().SortedAscending();
         var idx = builder.HasIndex<TestEntityTagLink>().IsUnique();

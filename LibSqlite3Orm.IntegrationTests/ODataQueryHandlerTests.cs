@@ -64,9 +64,9 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenHasComplexOrderBy_ReturnsExpectedResults()
     {
-        var expected = SeededLinkRecords.Values.OrderByDescending(x => x.Tag.Value?.TagValue).ToArray();
+        var expected = SeededLinkRecords.Values.OrderByDescending(x => x.Tag.Value?.StringValue).ToArray();
 
-        var actual = Orm.ODataQuery<TestEntityTagLink>("$orderby=tag.value.tagValue desc");
+        var actual = Orm.ODataQuery<TestEntityTagLink>("$orderby=tag.value.stringValue desc");
         
         var actualEntities = actual.Entities.ToArray();
         Assert.That(actualEntities, Is.Not.Empty);

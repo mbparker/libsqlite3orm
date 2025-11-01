@@ -64,6 +64,7 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
                     if (tagIds.Add(tagId))
                     {
                         var link = new TestEntityTagLink { EntityId = entity.Id, TagId = tagId };
+                        link.StringValue = GenerateRandomStringWithWords(1);
                         Orm.Insert(link);
                         SeededLinkRecords.Add(link.Id, link);
                         link.Entity = new Lazy<TestEntityMaster>(entity);
@@ -232,6 +233,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         return new TestEntityTag
         {
             TagValue = GenerateRandomStringWithWords(Rng.Next(1, 10)) + " - " + Guid.NewGuid().ToString("N"), // guarantee uniqueness
+            StringValue = GenerateRandomStringWithWords(1),
             Description = GenerateRandomStringWithWords(Rng.Next(1, 100))
         };
     }
@@ -402,7 +404,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         return randomDate;
     }
     
-    private string GenerateRandomStringWithWords(int numberOfWords)
+    protected string GenerateRandomStringWithWords(int numberOfWords)
     {
         if (numberOfWords == 0) return null;
 

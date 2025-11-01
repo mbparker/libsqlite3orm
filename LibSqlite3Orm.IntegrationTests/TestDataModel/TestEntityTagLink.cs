@@ -5,6 +5,7 @@ namespace LibSqlite3Orm.IntegrationTests.TestDataModel;
 public class TestEntityTagLink
 {
     public string Id { get; set; }
+    public string StringValue { get; set; }
     public long TagId { get; set; }
     [NotMapped]
     public Lazy<TestEntityTag> Tag { get; set; }
