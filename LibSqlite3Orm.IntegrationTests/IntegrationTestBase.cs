@@ -335,7 +335,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         result.DecimalValue = GenerateRandomDecimal();
         result.EnumValue = Environment.TickCount % 2 == 0 ?  TestEntityKind.Kind2 : TestEntityKind.Kind1;
         result.DateTimeValue = GenerateRandomDateTime(DateTime.MinValue, DateTime.Now);
-        result.DateOnlyValue = DateOnly.FromDateTime(GenerateRandomDateTime(DateTime.MinValue, DateTime.Now));
+        result.DateOnlyValue = Environment.TickCount % 2 == 0 ? DateOnly.FromDateTime(DateTime.UtcNow) : DateOnly.FromDateTime(GenerateRandomDateTime(DateTime.MinValue, DateTime.Now));
         result.TimeOnlyValue = TimeOnly.FromDateTime(GenerateRandomDateTime(DateTime.MinValue, DateTime.Now));
         result.DateTimeOffsetValue = DateTimeOffset.Parse(GenerateRandomDateTime(DateTime.MinValue, DateTime.Now).ToString("O"));
         var dt1 = GenerateRandomDateTime(DateTime.MinValue, DateTime.Now);

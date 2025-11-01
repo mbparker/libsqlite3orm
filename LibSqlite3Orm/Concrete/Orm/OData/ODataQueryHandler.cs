@@ -282,7 +282,28 @@ public class ODataQueryHandler : IODataQueryHandler
         var memberType = ((MemberExpression)memberExpression).Member.GetValueType() ?? throw new InvalidOperationException("Member type cannot be null.");
         var valueType = ((ConstantExpression)constantExpression).Value?.GetType() ?? throw new InvalidOperationException("Constant value cannot be null.");
         if (!valueType.IsAssignableTo(memberType))
-            return Expression.Convert(constantExpression, memberType);
+        {
+            try
+            {
+                return Expression.Convert(constantExpression, memberType);
+            }
+            catch (InvalidOperationException)
+            {
+                if (constantExpression is ConstantExpression constantExp)
+                {
+                    if (constantExp.Value is not null)
+                    {
+                        if (memberType == typeof(DateOnly) && valueType == typeof(DateTime))
+                        {
+                            return Expression.Constant(DateOnly.FromDateTime((DateTime)constantExp.Value));
+                        }
+                    }
+                }
+
+                throw;
+            }
+        }
+
         return constantExpression;
     }
 
