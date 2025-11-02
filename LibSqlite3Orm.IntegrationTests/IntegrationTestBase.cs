@@ -33,7 +33,8 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
             SeededMasterRecords.Clear();
             SeededOptionalRecords.Clear();
 
-            var detail = new TestEntityOptionalDetail { Details = "Detail Record 1" };
+            var detail = new TestEntityOptionalDetail
+                { Details = "Detail Record 1", Date = DateOnly.FromDateTime(DateTime.UtcNow) };
             Orm.Insert(detail);
             SeededOptionalRecords.Add(detail.Id, detail);
             
@@ -44,6 +45,7 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
                 entity.OptionalDetailId = i % 2 == 0 ? detail.Id : null;
                 Orm.Insert(entity);
                 SeededMasterRecords.Add(entity.Id, entity);
+                entity.OptionalDetail = new Lazy<TestEntityOptionalDetail>(entity.OptionalDetailId.HasValue ? detail : null);
             }
 
             cnt = Rng.Next(10, 25);

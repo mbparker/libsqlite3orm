@@ -253,6 +253,7 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             Assert.That(actual.OptionalDetail.Value, Is.Not.Null);
             Assert.That(actual.OptionalDetail.Value.Id, Is.EqualTo(expectedOptionalRecord.Id));
             Assert.That(actual.OptionalDetail.Value.Details, Is.EqualTo(expectedOptionalRecord.Details));
+            Assert.That(actual.OptionalDetail.Value.Date, Is.EqualTo(expectedOptionalRecord.Date));
         }
         else
         {

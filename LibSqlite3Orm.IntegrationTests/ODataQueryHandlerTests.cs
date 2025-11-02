@@ -50,9 +50,9 @@ public class ODataQueryHandlerTests : IntegrationTestSeededBase<TestDbContext>
     [Test]
     public void ODataQuery_WhenFilterByDateOnly_ReturnsExpectedResults()
     {
-        var expected = SeededMasterRecords.Values.Where(x => x.DateOnlyValue == DateOnly.FromDateTime(DateTime.UtcNow)).ToArray();
+        var expected = SeededMasterRecords.Values.Where(x => x.OptionalDetail.Value?.Date == DateOnly.FromDateTime(DateTime.UtcNow)).ToArray();
 
-        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=dateOnlyValue eq {DateTime.UtcNow:O}");
+        var actual = Orm.ODataQuery<TestEntityMaster>($"$filter=optionalDetail.value.date eq {DateTime.UtcNow:O}");
         
         var actualEntities = actual.Entities.ToArray();
         Assert.That(actualEntities, Is.Not.Empty);

@@ -295,7 +295,8 @@ public class SqliteTableOptionsBuilder<TTable>
                     var defaultValue = Activator.CreateInstance(memberType) ?? throw new InvalidOperationException(
                         $"Cannot get default value for non-nullable column {options.Name} of type {memberType.Name}");
                     defaultValue = serialization[memberType]?.Serialize(defaultValue) ?? defaultValue;
-                    options.DefaultValueLiteral = defaultValue.ToString();
+                    var isString = defaultValue is string;
+                    options.DefaultValueLiteral = isString ? $"'{defaultValue}'" : defaultValue.ToString();
                 }
                 
                 tableOptions.Columns.Add(options.Member.Name, options);
@@ -394,7 +395,8 @@ public class SqliteColumnOptionsBuilder
             if (type != defaultValue.GetType())
                 throw new InvalidDataContractException($"Invalid default value specified on column {options.TableOptions.Name}.{options.Name}");
             defaultValue = serialization[type]?.Serialize(defaultValue) ?? defaultValue;
-            options.DefaultValueLiteral = defaultValue.ToString();
+            var isString = defaultValue is string;
+            options.DefaultValueLiteral = isString ? $"'{defaultValue}'" : defaultValue.ToString();
         }
         else
             options.DefaultValueLiteral = "NULL";
