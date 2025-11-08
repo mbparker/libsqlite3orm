@@ -79,9 +79,9 @@ public class EntityDetailGetter : IEntityDetailGetter
                     }
                 }
 
-                detailPropertyLoader.Value.LoadDetailProperties<TEntity>(entity, table, row, recursiveLoad, connection);
+                detailPropertyLoader.Value.LoadDetailProperties(entity, table, row, recursiveLoad, connection);
 
-                return (TEntity)entity;
+                return entity;
             });
         }
 

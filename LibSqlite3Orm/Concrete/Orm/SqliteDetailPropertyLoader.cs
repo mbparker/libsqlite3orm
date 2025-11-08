@@ -8,11 +8,15 @@ namespace LibSqlite3Orm.Concrete.Orm;
 public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
 {
     private readonly Lazy<IEntityDetailGetter> entityDetailGetter;
+    private readonly IEntityDetailCacheProvider _entityDetailCacheProvider;
+    private readonly ISqliteOrmDatabaseContext context;
 
     public SqliteDetailPropertyLoader(Func<ISqliteOrmDatabaseContext, IEntityDetailGetter> entityDetailGetterFactory,
-        ISqliteOrmDatabaseContext context)
+        IEntityDetailCacheProvider entityDetailCacheProvider, ISqliteOrmDatabaseContext context)
     {
         entityDetailGetter = new Lazy<IEntityDetailGetter>(() =>  entityDetailGetterFactory(context));
+        this._entityDetailCacheProvider = entityDetailCacheProvider;
+        this.context = context;
     }
 
     public void LoadDetailProperties<TEntity>(TEntity entity, SqliteDbSchemaTable table, ISqliteDataRow row,
@@ -38,6 +42,9 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
                     var doNotLoad = false;
                     var fk = table.ForeignKeys.Single(x =>
                         x.Id == detailsProp.ForeignKeyId);
+                    var detailEntityType = Type.GetType(detailsProp.ReferencedEntityTypeName);
+                    if (detailEntityType is null) continue;
+                    
                     if (fk.Optional)
                     {
                         for (var i = 0; i < fk.KeyFields.Length; i++)
@@ -57,15 +64,18 @@ public class SqliteDetailPropertyLoader : ISqliteDetailPropertyLoader
                     var member = entityType.GetMember(detailsProp.PropertyEntityMember).SingleOrDefault();
                     if (member is not null)
                     {
-                        var detailEntityType = Type.GetType(detailsProp.ReferencedEntityTypeName);
-                        if (detailEntityType is not null)
+                        var entityCache = _entityDetailCacheProvider.GetCache(context, connection);
+                        var detailEntity = entityCache.TryGet(entity, detailsProp);
+                        if (detailEntity is null)
                         {
                             var getDetails =
                                 getDetailsGeneric.MakeGenericMethod(entityType, detailEntityType);
-                            var detailEntity = getDetails.Invoke(entityDetailGetter.Value,
+                            detailEntity = getDetails.Invoke(entityDetailGetter.Value,
                                 [entity, !doNotLoad && recursiveLoad, row, connection]);
-                            member.SetValue(entity, detailEntity);
+                            entityCache.Upsert(entity, detailEntity, detailsProp);
                         }
+                        
+                        member.SetValue(entity, detailEntity);
                     }
                 }
             }

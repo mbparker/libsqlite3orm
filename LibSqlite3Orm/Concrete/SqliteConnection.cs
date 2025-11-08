@@ -124,9 +124,9 @@ public class SqliteConnection : ISqliteConnection
         {
             ConnectionFlags = SqliteOpenFlags.ExtendedErrorCodes;
             VirtualFileSystemName = null;
-            dbHandle = IntPtr.Zero;
             Filename = string.Empty;
             ConnectionClosed?.Invoke(this, EventArgs.Empty);
+            dbHandle = IntPtr.Zero;
         }
     }
 

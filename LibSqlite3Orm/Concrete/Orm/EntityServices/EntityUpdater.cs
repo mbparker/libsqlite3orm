@@ -11,14 +11,17 @@ public class EntityUpdater : IEntityUpdater
 {
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
+    private readonly IEntityDetailCacheProvider _entityDetailCacheProvider;
     private readonly ISqliteOrmDatabaseContext context;
 
     public EntityUpdater(
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
-        ISqliteParameterPopulator  parameterPopulator, ISqliteOrmDatabaseContext context)
+        ISqliteParameterPopulator  parameterPopulator, IEntityDetailCacheProvider entityDetailCacheProvider, 
+        ISqliteOrmDatabaseContext context)
     {
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
+        this._entityDetailCacheProvider = entityDetailCacheProvider;
         this.context = context;
     }
     
@@ -32,6 +35,7 @@ public class EntityUpdater : IEntityUpdater
     {
         using (var cmd = connection.CreateCommand())
         {
+            _entityDetailCacheProvider.GetCache(context, connection).Remove(entity);
             parameterPopulator.Populate(synthesisResult, cmd.Parameters, entity);
             return cmd.ExecuteNonQuery(synthesisResult.SqlText) == 1;
         }

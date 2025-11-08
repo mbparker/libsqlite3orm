@@ -14,6 +14,7 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
     private readonly Func<TContext> contextFactory;
     private readonly Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory;
     private readonly Func<ISqliteOrmDatabaseContext, IODataQueryHandler> odataQueryHandlerFactory;
+    private readonly IEntityDetailCacheProvider cacheProvider;
     private TContext _context;
     private IEntityServices _entityServices;
     private IODataQueryHandler _odataQueryHandler;
@@ -22,11 +23,13 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
 
     public SqliteObjectRelationalMapper(Func<TContext> contextFactory,
         Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory,
-        Func<ISqliteOrmDatabaseContext, IODataQueryHandler> odataQueryHandlerFactory)
+        Func<ISqliteOrmDatabaseContext, IODataQueryHandler> odataQueryHandlerFactory,
+        IEntityDetailCacheProvider cacheProvider)
     {
         this.contextFactory = contextFactory;
         this.entityServicesFactory = entityServicesFactory;
         this.odataQueryHandlerFactory = odataQueryHandlerFactory;
+        this.cacheProvider = cacheProvider;
     }
     
     public ISqliteConnection Connection {
@@ -48,6 +51,12 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
                 _context = contextFactory();
             return _context;
         }
+    }
+
+    public bool DisableCaching
+    {
+        get => cacheProvider.DisableCaching;
+        set => cacheProvider.DisableCaching = value;
     }
     
     private IEntityServices EntityServices

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
+using LibSqlite3Orm.Abstract.Orm.EntityServices;
 using LibSqlite3Orm.Abstract.Orm.SqlSynthesizers;
 using LibSqlite3Orm.Concrete;
 using LibSqlite3Orm.Concrete.Orm.EntityServices;
@@ -18,6 +19,8 @@ public class EntityDeleterTests
     private ISqliteParameterCollection _mockParameters;
     private ISqliteDmlSqlSynthesizer _mockSynthesizer;
     private ISqliteParameterPopulator _mockParameterPopulator;
+    private IEntityDetailCache _mockDetailCache;
+    private IEntityDetailCacheProvider _mockDetailCacheProvider;
     private ISqliteOrmDatabaseContext _mockContext;
     private Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> _synthesizerFactory;
 
@@ -42,6 +45,8 @@ public class EntityDeleterTests
         _mockParameters = Substitute.For<ISqliteParameterCollection>();
         _mockSynthesizer = Substitute.For<ISqliteDmlSqlSynthesizer>();
         _mockParameterPopulator = Substitute.For<ISqliteParameterPopulator>();
+        _mockDetailCache = Substitute.For<IEntityDetailCache>();
+        _mockDetailCacheProvider = Substitute.For<IEntityDetailCacheProvider>();
         _mockContext = Substitute.For<ISqliteOrmDatabaseContext>();
 
         var mockSchema = BuildSchema();
@@ -56,10 +61,13 @@ public class EntityDeleterTests
 
         var synthesisResult = new DmlSqlSynthesisResult(SqliteDmlSqlSynthesisKind.Delete, mockSchema, null, "DELETE FROM Test WHERE Id = :Id", null);
         _mockSynthesizer.Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
+        
+        _mockDetailCacheProvider.GetCache(default, default).ReturnsForAnyArgs(_mockDetailCache);
 
         _deleter = new EntityDeleter(
             _synthesizerFactory,
             _mockParameterPopulator,
+            _mockDetailCacheProvider,
             _mockContext);
     }
 

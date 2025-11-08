@@ -13,14 +13,17 @@ public class EntityDeleter : IEntityDeleter
 {
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
+    private readonly IEntityDetailCacheProvider _entityDetailCacheProvider;
     private readonly ISqliteOrmDatabaseContext context;
 
     public EntityDeleter(
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
-        ISqliteParameterPopulator  parameterPopulator, ISqliteOrmDatabaseContext context)
+        ISqliteParameterPopulator parameterPopulator, IEntityDetailCacheProvider entityDetailCacheProvider,
+        ISqliteOrmDatabaseContext context)
     {
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
+        this._entityDetailCacheProvider = entityDetailCacheProvider;
         this.context = context;
     }
     
@@ -46,6 +49,7 @@ public class EntityDeleter : IEntityDeleter
         {
             using (var cmd = connection.CreateCommand())
             {
+                _entityDetailCacheProvider.GetCache(context, connection).Remove(predicate);
                 parameterPopulator.Populate<T>(synthesisResult, cmd.Parameters);
                 return cmd.ExecuteNonQuery(synthesisResult.SqlText);
             }

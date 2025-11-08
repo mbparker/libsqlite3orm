@@ -5,6 +5,7 @@ using System.Text;
 using Autofac;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
+using LibSqlite3Orm.Abstract.Orm.EntityServices;
 using LibSqlite3Orm.IntegrationTests.TestDataModel;
 using LibSqlite3Orm.Models.Orm.Events;
 
@@ -20,7 +21,9 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
     public override void SetUp()
     {
         base.SetUp();
+        EnableLogicTracing = false;
         DoSeedDatabase();
+        EnableLogicTracing = true;
     }
 
     protected virtual void SeedDatabase()
@@ -33,19 +36,26 @@ public class IntegrationTestSeededBase<TContext> : IntegrationTestBase<TContext>
             SeededMasterRecords.Clear();
             SeededOptionalRecords.Clear();
 
-            var detail = new TestEntityOptionalDetail
+            var detail1 = new TestEntityOptionalDetail
                 { Details = "Detail Record 1", Date = DateOnly.FromDateTime(DateTime.UtcNow) };
-            Orm.Insert(detail);
-            SeededOptionalRecords.Add(detail.Id, detail);
+            Orm.Insert(detail1);
+            SeededOptionalRecords.Add(detail1.Id, detail1);
+            
+            var detail2 = new TestEntityOptionalDetail
+                { Details = "Detail Record 2", Date = DateOnly.FromDateTime(DateTime.UtcNow) };
+            Orm.Insert(detail2);
+            SeededOptionalRecords.Add(detail2.Id, detail2);
             
             var cnt = Rng.Next(10, 50);
             for (var i = 0; i < cnt; i++)
             {
                 var entity = CreateTestEntityMasterWithRandomValues();
-                entity.OptionalDetailId = i % 2 == 0 ? detail.Id : null;
+                entity.OptionalDetailId = i % 3 == 0 ? detail1.Id : i % 2 == 0 ? detail2.Id : null;
                 Orm.Insert(entity);
                 SeededMasterRecords.Add(entity.Id, entity);
-                entity.OptionalDetail = new Lazy<TestEntityOptionalDetail>(entity.OptionalDetailId.HasValue ? detail : null);
+                entity.OptionalDetail =
+                    new Lazy<TestEntityOptionalDetail>(
+                        SeededOptionalRecords.GetValueOrDefault(entity.OptionalDetailId.GetValueOrDefault()));
             }
 
             cnt = Rng.Next(10, 25);
@@ -102,7 +112,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
 {
     private IContainer container;
     private ISqliteConnection connection;
-    private IOrmGenerativeLogicTracer logicTracer;
+    private IEntityDetailCacheProvider cacheProvider;
     
     public static readonly List<string> WordList = new()
     {
@@ -116,14 +126,15 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     protected ISqliteObjectRelationalMapper<TContext> Orm { get; private set; }
     protected ISqliteObjectRelationalMapperDatabaseManager<TContext> DbManager { get; private set; }
     protected bool EnableLogicTracing { get; set; }
+    protected IOrmGenerativeLogicTracer LogicTracer { get; private set; }
 
     [SetUp]
     public virtual void SetUp()
     {
-        EnableLogicTracing = false;
-        logicTracer = Resolve<IOrmGenerativeLogicTracer>();
-        logicTracer.WhereClauseBuilderVisit += LogicTracerOnWhereClauseBuilderVisit;
-        logicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
+        LogicTracer = Resolve<IOrmGenerativeLogicTracer>();
+        LogicTracer.WhereClauseBuilderVisit += LogicTracerOnWhereClauseBuilderVisit;
+        LogicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
+        LogicTracer.CachedGetAttempt += LogicTracerOnCachedGetAttempt;
         
         connection = Resolve<Func<ISqliteConnection>>().Invoke();
         // This is required because we use the same WHERE filter expression for both the DB SELECT
@@ -144,15 +155,21 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         Orm = Resolve<Func<ISqliteObjectRelationalMapper<TContext>>>().Invoke();
         Orm.UseConnection(connection.GetReference());
         EnableLogicTracing = true;
+        Orm.DisableCaching = false;
+
+        cacheProvider = Resolve<IEntityDetailCacheProvider>();
     }
 
     [TearDown]
     public virtual void TearDown()
     {
+        cacheProvider.ClearAllCaches();
         Orm.Dispose();
+        DbManager.Dispose();
         connection.Dispose();
-        logicTracer.WhereClauseBuilderVisit -= LogicTracerOnWhereClauseBuilderVisit;
-        logicTracer.SqlStatementExecuting -= LogicTracerOnSqlStatementExecuting;        
+        LogicTracer.WhereClauseBuilderVisit -= LogicTracerOnWhereClauseBuilderVisit;
+        LogicTracer.SqlStatementExecuting -= LogicTracerOnSqlStatementExecuting;   
+        LogicTracer.CachedGetAttempt -= LogicTracerOnCachedGetAttempt;
     }
     
     [OneTimeSetUp]
@@ -360,7 +377,13 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     {
         if (EnableLogicTracing)
             Console.WriteLine(e.Message.Value);
-    }    
+    } 
+    
+    private void LogicTracerOnCachedGetAttempt(object sender, CacheAccessAttemptEventArgs e)
+    {
+        if (EnableLogicTracing)
+            Console.WriteLine(e.Message.Value);
+    }
 
     private decimal GenerateRandomDecimal()
     {

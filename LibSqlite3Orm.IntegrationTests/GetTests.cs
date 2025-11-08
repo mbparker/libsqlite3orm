@@ -1,11 +1,141 @@
 using System.Linq.Expressions;
 using LibSqlite3Orm.IntegrationTests.TestDataModel;
+using LibSqlite3Orm.Models.Orm.Events;
 
 namespace LibSqlite3Orm.IntegrationTests;
 
 [TestFixture]
 public class GetTests : IntegrationTestSeededBase<TestDbContext>
 {
+    private List<CacheAccessAttemptEventArgs> cacheGetEvents = new();
+    
+    [Test]
+    public void Get_WhenRepeatedReadsOfSameNavProp_UsesCachedValue()
+    {
+        var missCount = 0;
+        var optionalRecordIds = new HashSet<long>();
+        for (var i = 1; i <= 10; i++)
+        {
+            var records = Orm
+                .Get<TestEntityMaster>(true)
+                .OrderBy(x => x.Id)
+                .AsEnumerable();
+            
+            foreach (var record in records)
+            {
+                var details = record.OptionalDetail.Value;
+                if (details is not null)
+                {
+                    optionalRecordIds.Add(details.Id);
+                    Assert.That(cacheGetEvents.Count, Is.EqualTo(1));
+                    var lastEvent = cacheGetEvents.First();
+                    if (lastEvent.IsHit && lastEvent.DetailEntity is Lazy<TestEntityOptionalDetail> detailEntity)
+                    {
+                        AssertThatRecordsMatch(details, detailEntity.Value);
+                    }
+                    else
+                    {
+                        if (lastEvent.IsHit)
+                            Assert.Fail($"Detail entity is wrong type: {lastEvent.DetailEntity.GetType().Name}");
+                        else
+                            missCount++;
+                    }
+                }
+                else
+                {
+                    Assert.That(cacheGetEvents.Count, Is.EqualTo(0));
+                }
+                
+                cacheGetEvents.Clear();
+            }
+        }
+
+        Assert.That(missCount, Is.EqualTo(optionalRecordIds.Count));
+    }
+
+    [Test]
+    public void Get_WhenDetailEntityIsModified_RemovesCacheEntry()
+    {
+        var records = Orm
+            .Get<TestEntityMaster>(true)
+            .Where(x => x.OptionalDetailId != null)
+            .OrderBy(x => x.Id)
+            .AllRecords();
+
+        var detail = records[0].OptionalDetail.Value;
+        detail.Details = "Some modified text";
+        Orm.Update(detail);
+        cacheGetEvents.Clear();
+
+        var rec = Orm
+            .Get<TestEntityMaster>(true)
+            .Where(x => x.OptionalDetailId != null)
+            .OrderBy(x => x.Id)
+            .Take(1)
+            .SingleRecord();
+        
+        detail = rec.OptionalDetail.Value;
+        Assert.That(cacheGetEvents.Count, Is.EqualTo(1));
+        var lastEvent = cacheGetEvents.First();
+        Assert.That(lastEvent.IsHit, Is.False);
+    }
+    
+    [Test]
+    public void Get_WhenDetailEntityIsDeleted_RemovesCacheEntry()
+    {
+        var rec = Orm
+            .Get<TestEntityMaster>(true)
+            .Where(x => x.OptionalDetailId != null)
+            .OrderBy(x => x.Id)
+            .Take(1)
+            .SingleRecord();
+
+        var detail = rec.OptionalDetail.Value;
+        rec.OptionalDetailId = null;
+        Assert.That(() => Orm.Update(rec), Is.True);
+        Assert.That(() => Orm.Delete<TestEntityOptionalDetail>(x => x.Id == detail.Id), Is.EqualTo(1));
+        cacheGetEvents.Clear();
+
+        rec = Orm
+            .Get<TestEntityMaster>(true)
+            .Where(x => x.OptionalDetailId != null)
+            .OrderBy(x => x.Id)
+            .Take(1)
+            .SingleRecord();
+        
+        var detail2 = rec.OptionalDetail.Value;
+        Assert.That(cacheGetEvents.Count, Is.EqualTo(1));
+        var lastEvent = cacheGetEvents.First();
+        Assert.That(lastEvent.IsHit, Is.False);
+        Assert.That(detail2.Id, Is.Not.EqualTo(detail.Id));
+    }
+
+    [Test]
+    public void Get_WhenCacheDisabled_ProducesNoCacheEventsAndReturnsExpectedData()
+    {
+        Orm.DisableCaching = true;
+        
+        var expected = SeededMasterRecords
+            .Values
+            .OrderBy(x => x.Id)
+            .ToArray();
+        
+        var actual = Orm
+            .Get<TestEntityMaster>(recursiveLoad: true)
+            .OrderBy(x => x.Id)
+            .AllRecords();
+        
+        Assert.That(actual.Length, Is.EqualTo(expected.Length));
+        for (var i = 0; i < expected.Length; i++)
+        {
+            AssertThatRecordsMatch(actual[i], expected[i]);
+            AssertThatTagLinkRecordsMatch(actual[i], expected[i]);
+            AssertOptionalRecordsMatch(actual[i], expected[i]);
+        }
+        
+        Assert.That(cacheGetEvents, Is.Empty);
+    }
+
     [Test]
     public void Get_WhenNoWhereClauseAndNotRecursive_ReturnsAllRecordsWithoutNavigationProps()
     {
@@ -190,6 +320,24 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
                     Assert.That(actual.OptionalDetail.Value, Is.Null);
                 }
             });
+    }
+    
+    public override void SetUp()
+    {
+        base.SetUp();
+        LogicTracer.CachedGetAttempt += HandleCachedGetAttempt;
+    }
+
+    public override void TearDown()
+    {
+        LogicTracer.CachedGetAttempt -= HandleCachedGetAttempt;
+        cacheGetEvents.Clear();
+        base.TearDown();
+    }
+    
+    private void HandleCachedGetAttempt(object sender, CacheAccessAttemptEventArgs e)
+    {
+        cacheGetEvents.Add(e);
     }
 
     private void Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder<TEntity, TKey>(bool recursiveLoad,

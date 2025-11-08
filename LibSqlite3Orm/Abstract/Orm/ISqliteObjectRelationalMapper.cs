@@ -8,6 +8,7 @@ public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TCo
 {
     TContext Context { get; }
     ISqliteConnection Connection { get; }
+    bool DisableCaching { get; set; }
     
     void UseConnection(ISqliteConnection connection);
 
