@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <LangVersion>13</LangVersion>
+        <LangVersion>14</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <Configurations>Release;Debug</Configurations>
@@ -11,17 +11,17 @@
         <Copyright>Copyright (c) 2025, Mathew Parker</Copyright>
         <RepositoryUrl>https://github.com/mbparker/libsqlite3orm</RepositoryUrl>
         <PackageTags>Cross Platform, ORM, .NET, Sqlite</PackageTags>
-        <Version>1.5.1</Version>
+        <Version>1.5.2</Version>
         <Company>Mathew Parker</Company>
         <Authors>Mathew Parker</Authors>
-        <AssemblyVersion>1.5.1.0</AssemblyVersion>
-        <FileVersion>1.5.1.0</FileVersion>
-        <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+        <AssemblyVersion>1.5.2.0</AssemblyVersion>
+        <FileVersion>1.5.2.0</FileVersion>
+        <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Autofac" Version="8.4.0" />
-      <PackageReference Include="LibODataParser" Version="1.0.6" />
+      <PackageReference Include="Autofac" Version="9.0.0" />
+      <PackageReference Include="LibODataParser" Version="1.0.7" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
       <PackageReference Include="System.IO.Hashing" Version="10.0.0" />
       <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.11" />
