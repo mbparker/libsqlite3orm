@@ -63,6 +63,48 @@ jobs:
     - name: Pack
       run: dotnet pack LibSqlite3Orm/LibSqlite3Orm.csproj --configuration Release --no-build --output ./nupkg     
 
+    - name: Upload Nuget Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: LibSqlite3Orm.nupkg
+        path: |
+          ./nupkg/LibSqlite3Orm.*.nupkg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }} 
+
+    - name: Upload Nuget Symbol Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: LibSqlite3Orm.snupkg
+        path: |
+          ./nupkg/LibSqlite3Orm.*.snupkg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }} 
+
+    - name: Download Nuget Package
+      uses: actions/download-artifact@v4
+      with:
+        name: LibSqlite3Orm.nupkg
+        path: artifacts
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }} 
+
+    - name: Download Nuget Symbol Package
+      uses: actions/download-artifact@v4
+      with:
+        name: LibSqlite3Orm.snupkg
+        path: artifacts
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }}        
+
+    - name: Attach Artifacts to Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          artifacts/**
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }}      
+
     - name: NuGet login (OIDC → temp API key)
       uses: NuGet/login@v1
       id: login
