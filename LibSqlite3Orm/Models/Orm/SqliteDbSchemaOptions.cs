@@ -7,6 +7,7 @@ public class SqliteDbSchemaOptions
 {
     public Dictionary<string, SqliteTableOptions> Tables { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, List<SqliteIndexOptions>> Indexes { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public string DefaultCustomStringColumnCollation { get; set; } = null;
 }
 
 public class SqliteTableOptions
@@ -45,6 +46,8 @@ public class SqliteTableColumnOptions
     public SqliteLiteConflictAction? IsUniqueConflictAction { get; set; }
     
     public SqliteCollation? Collation { get; set; }
+    
+    public string CustomCollation { get; set; }
 
     public string DefaultValueLiteral { get; set; }
     
@@ -126,5 +129,6 @@ public class SqliteIndexColumnOptions
     public SqliteIndexOptions IndexOptions { get; }
     public MemberInfo Member { get; set; }
     public SqliteCollation? Collation { get; set; }
+    public string CustomCollation { get; set; }
     public bool SortDescending { get; set; }
 }

@@ -1,4 +1,5 @@
 using LibSqlite3Orm.PInvoke.Types.Enums;
+using LibSqlite3Orm.Types;
 
 namespace LibSqlite3Orm.Abstract;
 

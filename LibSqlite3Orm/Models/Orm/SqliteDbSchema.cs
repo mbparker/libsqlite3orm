@@ -62,6 +62,7 @@ public class SqliteDbSchemaTableColumn
     public bool IsImmutable { get; set; }
     public SqliteLiteConflictAction? IsUniqueConflictAction { get; set; }
     public SqliteCollation? Collation { get; set; }
+    public string CustomCollation { get; set; }
     public string DefaultValueLiteral { get; set; }
 }
 
@@ -105,5 +106,6 @@ public class SqliteDbSchemaIndexColumn
 {
     public string Name { get; set; }
     public SqliteCollation? Collation { get; set; }
+    public string CustomCollation { get; set; }
     public bool SortDescending { get; set; }
 }

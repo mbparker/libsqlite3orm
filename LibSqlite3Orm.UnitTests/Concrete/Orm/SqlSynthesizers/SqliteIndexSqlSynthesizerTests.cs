@@ -109,6 +109,19 @@ public class SqliteIndexSqlSynthesizerTests
         // Assert
         Assert.That(result, Does.Contain("Name COLLATE NOCASE ASC"));
     }
+    
+    [Test]
+    public void SynthesizeCreate_WithCustomCollation_IncludesCollationInSql()
+    {
+        // Arrange
+        _testIndex.Columns[0].CustomCollation = "TEST_COLLATION";
+
+        // Act
+        var result = _synthesizer.SynthesizeCreate("IX_TestTable_Name");
+
+        // Assert
+        Assert.That(result, Does.Contain("Name COLLATE TEST_COLLATION ASC"));
+    }    
 
     [Test]
     public void SynthesizeDrop_WithIndexName_GeneratesDropIndexSql()

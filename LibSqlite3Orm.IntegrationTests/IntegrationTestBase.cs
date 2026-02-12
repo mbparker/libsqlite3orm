@@ -6,6 +6,7 @@ using Autofac;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Abstract.Orm.EntityServices;
+using LibSqlite3Orm.Concrete;
 using LibSqlite3Orm.IntegrationTests.TestDataModel;
 using LibSqlite3Orm.Models.Orm.Events;
 
@@ -113,6 +114,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     private IContainer container;
     private ISqliteConnection connection;
     private IEntityDetailCacheProvider cacheProvider;
+    private ISqliteCustomCollationRegistry collationRegistry;
     
     public static readonly List<string> WordList = new()
     {
@@ -135,6 +137,9 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
         LogicTracer.WhereClauseBuilderVisit += LogicTracerOnWhereClauseBuilderVisit;
         LogicTracer.SqlStatementExecuting += LogicTracerOnSqlStatementExecuting;
         LogicTracer.CachedGetAttempt += LogicTracerOnCachedGetAttempt;
+        
+        collationRegistry = Resolve<ISqliteCustomCollationRegistry>();
+        RegisterCustomCollations(collationRegistry);
         
         connection = Resolve<Func<ISqliteConnection>>().Invoke();
         // This is required because we use the same WHERE filter expression for both the DB SELECT
@@ -183,6 +188,10 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
     {
         DisposeContainer();
     }
+
+    protected virtual void RegisterCustomCollations(ISqliteCustomCollationRegistry registry)
+    {
+    }
     
     protected TService Resolve<TService>()
     {
@@ -197,6 +206,7 @@ public class IntegrationTestBase<TContext> where TContext : class, ISqliteOrmDat
 
     protected void DisposeContainer()
     {
+        SqliteConnection.ContainerDisposing();
         container?.Dispose();
         container = null;
     }

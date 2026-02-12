@@ -27,7 +27,9 @@ public class SqliteIndexSqlSynthesizer : SqliteDdlSqlSynthesizerBase
             if (!firstCol) sb.Append(", ");
             
             sb.Append(col.Name);
-            if (col.Collation.HasValue)
+            if (!string.IsNullOrWhiteSpace(col.CustomCollation))
+                sb.Append($" COLLATE {col.CustomCollation}");
+            else if (col.Collation.HasValue)
                 sb.Append($" COLLATE {GetCollationString(col.Collation.Value)}");
             sb.Append(col.SortDescending ? " DESC" : " ASC");
             

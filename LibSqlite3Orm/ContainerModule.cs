@@ -29,6 +29,7 @@ public class ContainerModule : Module
         builder.RegisterType<SqliteParameterCollection>().As<ISqliteParameterCollection>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteParameterPopulator>().As<ISqliteParameterPopulator>().SingleInstance();
         builder.RegisterType<SqliteEntityPostInsertPrimaryKeySetter>().As<ISqliteEntityPostInsertPrimaryKeySetter>().SingleInstance();
+        builder.RegisterType<SqliteCustomCollationRegistry>().As<ISqliteCustomCollationRegistry>().SingleInstance();
         
         builder.RegisterType<OrmGenerativeLogicTracer>().As<IOrmGenerativeLogicTracer>().SingleInstance();
         

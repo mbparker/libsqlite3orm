@@ -8,6 +8,7 @@ using System.Text;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.Abstract.Orm;
 using LibSqlite3Orm.Models.Orm;
+using LibSqlite3Orm.PInvoke.Types.Enums;
 
 namespace LibSqlite3Orm.Types.Orm;
 
@@ -46,6 +47,12 @@ public class SqliteDbSchemaBuilder
         return new SqliteIndexOptionsBuilder<TTable>(options);
     }
 
+    public SqliteDbSchemaBuilder WithDefaultCustomCollation(string funcName)
+    {
+        schemaOptions.DefaultCustomStringColumnCollation = funcName;
+        return this;
+    }
+
     public SqliteDbSchema Build()
     {
         var result = new SqliteDbSchema();
@@ -73,6 +80,11 @@ public class SqliteDbSchemaBuilder
                         $"Type {serializedType} is not directly storable. Consider using an {nameof(ISqliteFieldSerializer)} implementation for field {schemaTableCol.Name} on table {schemaTable.Name}.");
                 schemaTableCol.DbFieldTypeAffinity = colAffinity.Value;
                 schemaTableCol.Collation = column.Collation;
+                schemaTableCol.CustomCollation = column.CustomCollation;
+                if (colAffinity == SqliteDataType.Text && string.IsNullOrWhiteSpace(column.CustomCollation) &&
+                    !string.IsNullOrWhiteSpace(column.TableOptions.SchemaOptions.DefaultCustomStringColumnCollation))
+                    schemaTableCol.CustomCollation =
+                        column.TableOptions.SchemaOptions.DefaultCustomStringColumnCollation;
                 schemaTableCol.DefaultValueLiteral = column.DefaultValueLiteral;
                 schemaTableCol.IsNotNull = column.IsNotNull;
                 schemaTableCol.IsNotNullConflictAction = column.IsNotNullConflictAction;
@@ -187,6 +199,15 @@ public class SqliteDbSchemaBuilder
                         .Columns[column.Member.Name].Name;
                     schemaIndexCol.SortDescending = column.SortDescending;
                     schemaIndexCol.Collation = column.Collation;
+                    if (schemaIndexCol.Collation is null)
+                        schemaIndexCol.Collation = index.SchemaOptions
+                            .Tables[index.TableType.AssemblyQualifiedName]
+                            .Columns[schemaIndexCol.Name].Collation;                        
+                    schemaIndexCol.CustomCollation = column.CustomCollation;
+                    if (string.IsNullOrWhiteSpace(schemaIndexCol.CustomCollation))
+                        schemaIndexCol.CustomCollation = index.SchemaOptions
+                            .Tables[index.TableType.AssemblyQualifiedName]
+                            .Columns[schemaIndexCol.Name].CustomCollation;
                     schemaIndex.Columns.Add(schemaIndexCol);
                 }
 
@@ -208,7 +229,7 @@ public class SqliteDbSchemaBuilder
         foreach (var col in index.Columns)
         {
             sb.Append(col.Name);
-            sb.Append(col.Collation.GetValueOrDefault());
+            sb.Append(!string.IsNullOrWhiteSpace(col.CustomCollation) ? col.CustomCollation : col.Collation.GetValueOrDefault());
             sb.AppendLine($"{col.SortDescending}");
         }
 
@@ -416,6 +437,12 @@ public class SqliteColumnOptionsBuilder
         options.Collation = collation;
         return this;
     }
+    
+    public SqliteColumnOptionsBuilder UsingCollation(string funcName)
+    {
+        options.CustomCollation = funcName;
+        return this;
+    }    
 
     public SqliteColumnOptionsBuilder IsImmutable(bool isImmutable = true)
     {
@@ -590,6 +617,12 @@ public class SqliteIndexColumnOptionsBuilder
         options.Collation = collation;
         return this;
     }
+    
+    public SqliteIndexColumnOptionsBuilder UsingCollation(string funcName)
+    {
+        options.CustomCollation = funcName;
+        return this;
+    }    
 
     public SqliteIndexColumnOptionsBuilder SortedAscending()
     {

@@ -1,23 +1,28 @@
+using System.Runtime.InteropServices;
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.PInvoke;
 using LibSqlite3Orm.PInvoke.Types.Enums;
 using LibSqlite3Orm.PInvoke.Types.Exceptions;
+using LibSqlite3Orm.Types;
 
 namespace LibSqlite3Orm.Concrete;
 
 public class SqliteConnection : ISqliteConnection
 {
+    private static ISqliteCustomCollationRegistry collationRegistry;
     private readonly Func<ISqliteConnection, ISqliteCommand> commandFactory;
     private readonly Func<ISqliteConnection, ISqliteTransaction> transactionFactory;
     private readonly List<ISqliteTransaction> transactionStack = new(); // Can't be an actual stack object.
+    private readonly HashSet<int> collationIdsRegisteredOnThisConnection = new();
     private IntPtr dbHandle;
     private bool caseSensitiveLike;
     private bool foreignKeysEnforced = true;
     private bool disposed;
-    
-    public SqliteConnection(Func<ISqliteConnection, ISqliteCommand> commandFactory,
-        Func<ISqliteConnection, ISqliteTransaction> transactionFactory)
+
+    public SqliteConnection(ISqliteCustomCollationRegistry collationRegistry, Func<ISqliteConnection,
+        ISqliteCommand> commandFactory, Func<ISqliteConnection, ISqliteTransaction> transactionFactory)
     {
+        SqliteConnection.collationRegistry ??= collationRegistry;
         this.commandFactory = commandFactory;
         this.transactionFactory = transactionFactory;
     }
@@ -70,6 +75,11 @@ public class SqliteConnection : ISqliteConnection
         Dispose(true);
     }
 
+    public static void ContainerDisposing()
+    {
+        collationRegistry = null;
+    }
+
     public void Open(string filename, SqliteOpenFlags flags, string virtualFileSystemName = null)
     {
         if (Connected) throw new InvalidOperationException("The database connection is already open.");
@@ -84,6 +94,7 @@ public class SqliteConnection : ISqliteConnection
         // Both of these default to false/off to be consistent with official raw SQLite native lib behavior. 
         SetCaseSensitiveLike(CaseSensitiveLike);
         SetForeignKeyEnforcement(ForeignKeysEnforced);
+        RegisterCollationsWithConnection();
     }
 
     public void OpenReadWrite(string filename, bool mustExist)
@@ -127,6 +138,7 @@ public class SqliteConnection : ISqliteConnection
             Filename = string.Empty;
             ConnectionClosed?.Invoke(this, EventArgs.Empty);
             dbHandle = IntPtr.Zero;
+            collationIdsRegisteredOnThisConnection.Clear();
         }
     }
 
@@ -150,6 +162,64 @@ public class SqliteConnection : ISqliteConnection
     }
 
     public ISqliteConnection GetReference() => new SqliteConnectionReference(this);
+
+    private void CreateCustomCollationUtf8(string name, SqliteCustomCollation collation)
+    {
+        static int CollationFunc(IntPtr pArg, int len1, IntPtr s1, int len2, IntPtr s2)
+        {
+            var str1 = Marshal.PtrToStringUTF8(s1, len1);
+            var str2 = Marshal.PtrToStringUTF8(s2, len2);
+            return collationRegistry.GetCollation(pArg.ToInt32())?.Invoke(str1, str2) ?? 0;
+        }
+
+        var collationId = collationRegistry.GetCollationId(name);
+        if (collationId > 0 && collationIdsRegisteredOnThisConnection.Add(collationId))
+        {
+            var ret = SqliteExternals.CreateCollation2(GetHandle(), name, SqliteTextEncoding.Utf8, new IntPtr(collationId),
+                CollationFunc, IntPtr.Zero);
+            if (ret != SqliteResult.OK)
+                throw new SqliteException(ret, SqliteExternals.ExtendedErrCode(dbHandle),
+                    $"Cannot create custom collation ({SqliteTextEncoding.Utf8}), Code: {ret:X}");
+        }
+    }
+    
+    private void CreateCustomCollationUtf16(string name, SqliteCustomCollation collation, SqliteTextEncoding encoding = SqliteTextEncoding.Utf16)
+    {
+        static int CollationFunc(IntPtr pArg, int len1, IntPtr s1, int len2, IntPtr s2)
+        {
+            var str1 = Marshal.PtrToStringUni(s1, len1 / 2);
+            var str2 = Marshal.PtrToStringUni(s2, len2 / 2);
+            return collationRegistry.GetCollation(pArg.ToInt32())?.Invoke(str1, str2) ?? 0;
+        }
+
+        if (encoding == SqliteTextEncoding.Utf8) throw new ArgumentOutOfRangeException(nameof(encoding));
+        
+        var collationId = collationRegistry.GetCollationId(name);
+        if (collationId > 0 && collationIdsRegisteredOnThisConnection.Add(collationId))
+        {
+            var ret = SqliteExternals.CreateCollation16(GetHandle(), name, encoding, new IntPtr(collationId),
+                CollationFunc);
+            if (ret != SqliteResult.OK)
+                throw new SqliteException(ret, SqliteExternals.ExtendedErrCode(dbHandle),
+                    $"Cannot create custom collation ({encoding}), Code: {ret:X}");
+        }
+    }    
+
+    private void RegisterCollationsWithConnection()
+    {
+        foreach (var regItem in collationRegistry.GetAllRegistrations())
+        {
+            switch (regItem.Encoding)
+            {
+                case SqliteTextEncoding.Utf8:
+                    CreateCustomCollationUtf8(regItem.Name, regItem.CollationFunc);
+                    break;
+                default:
+                    CreateCustomCollationUtf16(regItem.Name, regItem.CollationFunc, regItem.Encoding);
+                    break;
+            }
+        }
+    }
 
     private void Pragma(string name, bool enabled)
     {

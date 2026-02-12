@@ -25,7 +25,9 @@ public class SqliteTableSqlSynthesizer : SqliteDdlSqlSynthesizerBase
 
             sb.Append($"{column.Name} {GetColumnTypeString(column.DbFieldTypeAffinity)}");
 
-            if (column.Collation.HasValue)
+            if (!string.IsNullOrWhiteSpace(column.CustomCollation))
+                sb.Append($" COLLATE {column.CustomCollation}");
+            else if (column.Collation.HasValue)
                 sb.Append($" COLLATE {GetCollationString(column.Collation.Value)}");
 
             if (column.IsUnique)

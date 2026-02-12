@@ -11,6 +11,7 @@ public static class ContainerRegistration
         builder.RegisterModule<ContainerModule>();
         builder.RegisterType<TestDbContext>().InstancePerDependency();
         builder.RegisterType<TestDbContextAddedTable>().InstancePerDependency();
+        builder.RegisterType<TestDbContextWithCustomCollation>().InstancePerDependency();
         return builder.Build();
     }
 }

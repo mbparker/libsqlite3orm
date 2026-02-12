@@ -133,6 +133,15 @@ public static partial class SqliteExternals
 
 	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_libversion_number", CallingConvention = CallingConvention.Cdecl)]
 	public static extern int LibVersionNumber();
+	
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate int CollationCallback(IntPtr pApp, int len1, IntPtr str1, int len2, IntPtr str2);	
+	
+	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_create_collation_v2", CallingConvention = CallingConvention.Cdecl)]
+	public static extern SqliteResult CreateCollation2(IntPtr db, [MarshalAs(UnmanagedType.LPStr)] string zName, SqliteTextEncoding eTextRep, IntPtr pArg, CollationCallback xCompare, IntPtr xDestroy);
+	
+	[DllImport(SqliteConstants.LibraryPath, EntryPoint = "sqlite3_create_collation16", CallingConvention = CallingConvention.Cdecl)]
+	public static extern SqliteResult CreateCollation16(IntPtr db, [MarshalAs(UnmanagedType.LPWStr)] string zName, SqliteTextEncoding eTextRep, IntPtr pArg, CollationCallback xCompare);	
 }
 
 public static partial class SqliteExternals

@@ -1,5 +1,6 @@
 using LibSqlite3Orm.Abstract;
 using LibSqlite3Orm.PInvoke.Types.Enums;
+using LibSqlite3Orm.Types;
 
 namespace LibSqlite3Orm.Concrete;
 
@@ -53,10 +54,8 @@ public class SqliteConnectionReference : ISqliteConnection
 
     public IntPtr GetHandle() => connection.GetHandle();
 
-    public void Close()
-    {
-        connection.Close();
-    }
+    public void Close() => connection.Close();
+    
 
     public ISqliteCommand CreateCommand() => connection.CreateCommand();
 
