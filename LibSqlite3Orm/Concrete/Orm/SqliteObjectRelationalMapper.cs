@@ -20,6 +20,7 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
     private IODataQueryHandler _odataQueryHandler;
     private ISqliteTransaction _transaction;
     private ISqliteConnection _connection;
+    private bool ownsConnection;
 
     public SqliteObjectRelationalMapper(Func<TContext> contextFactory,
         Func<ISqliteOrmDatabaseContext, IEntityServices> entityServicesFactory,
@@ -81,20 +82,39 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
 
     public void UseConnection(ISqliteConnection connection)
     {
+        if (_connection is not null) throw new InvalidOperationException($"Connection already obtained. If the intent is to change connections, call {nameof(ReleaseConnection)} first.");
         Connection = connection.GetReference();
+        ownsConnection = false;
+    }
+    
+    public void CreateConnection(Func<ISqliteConnection> connectionFactory)
+    {
+        if (_connection is not null) throw new InvalidOperationException($"Connection already obtained. If the intent is to change connections, call {nameof(ReleaseConnection)} first.");
+        Connection = connectionFactory();
+        ownsConnection = true;
+    }
+
+    public void ReleaseConnection()
+    {
+        if (_connection is not null)
+        {
+            if (ownsConnection)
+                _connection.Dispose();
+            _connection = null;
+        }
     }
 
     public virtual void Dispose()
     {
-        if (Connection is not null)
+        if (_connection is not null)
         {
             if (_transaction is not null)
             {
                 _transaction?.Dispose();
                 _transaction = null;
             }
-            
-            Connection = null;
+
+            ReleaseConnection();
         }
     }
     

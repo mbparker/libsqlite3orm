@@ -11,6 +11,8 @@ public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TCo
     bool DisableCaching { get; set; }
     
     void UseConnection(ISqliteConnection connection);
+    void CreateConnection(Func<ISqliteConnection> connectionFactory);
+    void ReleaseConnection();
 
     ISqliteCommand CreateSqlCommand();
 

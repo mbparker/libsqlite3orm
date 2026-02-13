@@ -17,7 +17,7 @@ public class EntityDetailCacheProvider : IEntityDetailCacheProvider, IEntityDeta
         this.entityCacheFactory = entityCacheFactory;
     }
     
-    public bool DisableCaching { get; set; } = false;
+    public bool DisableCaching { get; set; } = true;
     
     public IEntityDetailCache GetCache(ISqliteOrmDatabaseContext context, ISqliteConnection connection)
     {
