@@ -34,8 +34,13 @@ public class SqliteEntityWriter : ISqliteEntityWriter
             var member = entityType.GetMember(col.ModelFieldName).SingleOrDefault();
             if (member is not null)
             {
+                var fieldType = Type.GetType(col.ModelFieldTypeName);
+                    if (fieldType is null) throw new TypeLoadException(col.ModelFieldTypeName);
                 var rowField = row[table.Name + col.Name];
-                member.SetValue(entity, rowField.ValueAs(Type.GetType(col.ModelFieldTypeName)));
+                if (rowField is not null)
+                    member.SetValue(entity, rowField.ValueAs(fieldType));
+                else
+                    member.SetValue(entity, null);
             }
         }
 

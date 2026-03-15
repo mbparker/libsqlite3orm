@@ -18,28 +18,29 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     private readonly List<SqliteSortSpec> sortSpecs;
     private readonly bool recursiveLoad;
     private Expression<Func<T, bool>> wherePredicate;
+    private SqliteProjectionArgs projection;
     private int? skipCount;
     private int? takeCount;
 
     public SqliteOrderedQueryable(SqliteDbSchema schema,
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
         Func<ISqliteDataRow, T> modelDeserializerFunc, bool recursiveLoad)
-        : this(schema, executeFunc, modelDeserializerFunc, recursiveLoad, null, null, null, null)
+        : this(schema, executeFunc, modelDeserializerFunc, recursiveLoad, null, null, null, null, null)
     {
     }
 
     private SqliteOrderedQueryable(SqliteDbSchema schema,
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
         Func<ISqliteDataRow, T> modelDeserializerFunc, bool recursiveLoad, Expression<Func<T, bool>> wherePredicate, SqliteSortSpec newSpec,
-        int? skipCount, int? takeCount)
-        : this(schema, executeFunc, modelDeserializerFunc, recursiveLoad, wherePredicate, [], skipCount, takeCount, newSpec)
+        SqliteProjectionArgs projection, int? skipCount, int? takeCount)
+        : this(schema, executeFunc, modelDeserializerFunc, recursiveLoad, wherePredicate, [], projection, skipCount, takeCount, newSpec)
     {
     }
 
     private SqliteOrderedQueryable(SqliteDbSchema schema,
         Func<SynthesizeSelectSqlArgs, ISqliteDataReader> executeFunc,
         Func<ISqliteDataRow, T> modelDeserializerFunc, bool recursiveLoad, Expression<Func<T, bool>> wherePredicate,
-        List<SqliteSortSpec> sortSpecs, int? skipCount, int? takeCount, SqliteSortSpec newSpec)
+        List<SqliteSortSpec> sortSpecs, SqliteProjectionArgs projection, int? skipCount, int? takeCount, SqliteSortSpec newSpec)
     {
         this.schema = schema;
         this.executeFunc = executeFunc;
@@ -47,6 +48,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         this.recursiveLoad = recursiveLoad;
         this.wherePredicate = wherePredicate;
         this.sortSpecs = sortSpecs;
+        this.projection = projection;
         this.skipCount = skipCount;
         this.takeCount = takeCount;        
         if (newSpec is not null)
@@ -57,7 +59,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     {
         return new SqliteOrderedEnumerator(
             executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, aggFunc: null, null)), modelDeserializerFunc);
+                wherePredicate, sortSpecs.ToArray(), projection, skipCount, takeCount, aggFunc: null, null)), modelDeserializerFunc);
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -111,7 +113,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         }
 
         using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                   effectivePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Count, null)))
+                   effectivePredicate, sortSpecs.ToArray(), projection, skipCount, takeCount, SqliteAggregateFunction.Count, null)))
         {
             return dataReader.First()[0].ValueAs<long>();
         }
@@ -122,7 +124,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         if (valueSelector.Body is MemberExpression me)
         {
             using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Sum, me.Member)))
+                       wherePredicate, sortSpecs.ToArray(), projection, skipCount, takeCount, SqliteAggregateFunction.Sum, me.Member)))
             {
                 return dataReader.First()[0].ValueAs<TValue>();
             }
@@ -136,7 +138,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         if (valueSelector.Body is MemberExpression me)
         {
             using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Total, me.Member)))
+                       wherePredicate, sortSpecs.ToArray(), projection, skipCount, takeCount, SqliteAggregateFunction.Total, me.Member)))
             {
                 return dataReader.First()[0].ValueAs<double>();
             }
@@ -150,7 +152,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         if (valueSelector.Body is MemberExpression me)
         {
             using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Min, me.Member)))
+                       wherePredicate, sortSpecs.ToArray(), projection, skipCount, takeCount, SqliteAggregateFunction.Min, me.Member)))
             {
                 return dataReader.First()[0].ValueAs<TValue>();
             }
@@ -164,7 +166,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         if (valueSelector.Body is MemberExpression me)
         {
             using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Max, me.Member)))
+                       wherePredicate, sortSpecs.ToArray(), projection, skipCount, takeCount, SqliteAggregateFunction.Max, me.Member)))
             {
                 return dataReader.First()[0].ValueAs<TValue>();
             }
@@ -178,7 +180,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
         if (valueSelector.Body is MemberExpression me)
         {
             using (var dataReader = executeFunc.Invoke(new SynthesizeSelectSqlArgs(recursiveLoad,
-                       wherePredicate, sortSpecs.ToArray(), skipCount, takeCount, SqliteAggregateFunction.Avg, me.Member)))
+                       wherePredicate, sortSpecs.ToArray(), projection, skipCount, takeCount, SqliteAggregateFunction.Avg, me.Member)))
             {
                 return dataReader.First()[0].ValueAs<double>();
             }
@@ -194,6 +196,32 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
                 predicate.Parameters);
         else
             wherePredicate = predicate;
+        return this;
+    }
+
+    public ISqliteQueryable<T> Select<TKey>(params Expression<Func<T, TKey>>[] selectors)
+    {
+        projection ??= new SqliteProjectionArgs();
+        var list = projection.SelectFields.ToList();
+        foreach (var expr in selectors)
+        {
+            if (expr.Body is MemberExpression me)
+                list.Add(me.Member);
+        }
+        projection.SelectFields = list.ToArray();
+        return this;
+    }
+
+    public ISqliteQueryable<T> Omit<TKey>(params Expression<Func<T, TKey>>[] selectors)
+    {
+        projection ??= new SqliteProjectionArgs();
+        var list = projection.OmitFields.ToList();
+        foreach (var expr in selectors)
+        {
+            if (expr.Body is MemberExpression me)
+                list.Add(me.Member);
+        }            
+        projection.OmitFields = list.ToArray();
         return this;
     }
 
@@ -240,7 +268,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
     private ISqliteOrderedQueryable<T> New(Expression keySelectorExpr, bool descending)
     {
         return new SqliteOrderedQueryable<T>(schema, executeFunc, modelDeserializerFunc, recursiveLoad,
-            wherePredicate, sortSpecs, skipCount, takeCount, new SqliteSortSpec(schema, typeof(T), keySelectorExpr, descending));
+            wherePredicate, sortSpecs, projection, skipCount, takeCount, new SqliteSortSpec(schema, typeof(T), keySelectorExpr, descending));
     }
 
     private class SqliteOrderedEnumerator : IEnumerator<T>

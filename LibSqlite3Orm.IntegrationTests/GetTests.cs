@@ -179,6 +179,35 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
         }
     }
     
+    [Test]
+    public void Get_WhenNoWhereClauseAndRecursiveAndOmitField_ReturnsAllRecordsWithNavigationProps()
+    {
+        var expected = SeededMasterRecords
+            .Values
+            .OrderBy(x => x.Id)
+            .ToArray();
+        
+        var actual = Orm
+            .Get<TestEntityMaster>(recursiveLoad: true)
+            .Omit(x => x.Int128Value)
+            .OrderBy(x => x.Id)
+            .AllRecords();
+
+        foreach (var expectedRec in expected)
+            expectedRec.Int128Value = null;
+        
+        Assert.That(actual.Length, Is.EqualTo(expected.Length));
+        for (var i = 0; i < expected.Length; i++)
+        {
+            AssertThatRecordsMatch(actual[i], expected[i]);
+            AssertThatTagLinkRecordsMatch(actual[i], expected[i], actualEntity => { 
+                actualEntity.Int128Value = null;
+                return actualEntity;
+            });
+            AssertOptionalRecordsMatch(actual[i], expected[i]);
+        }
+    }    
+    
     [TestCase(false, TestEntityKind.Kind1)]
     [TestCase(false, TestEntityKind.Kind2)]
     [TestCase(true, TestEntityKind.Kind1)]
@@ -364,8 +393,10 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
         }
     }
 
-    private void AssertThatTagLinkRecordsMatch(TestEntityMaster actual, TestEntityMaster expected)
+    private void AssertThatTagLinkRecordsMatch(TestEntityMaster actual, TestEntityMaster expected, Func<TestEntityMaster, TestEntityMaster> omitFieldsIfNeededAction = null)
     {
+        omitFieldsIfNeededAction ??= rec => rec;
+        
         Assert.That(actual.Tags.Value, Is.Not.Null);
             
         var expectedTagLinks = SeededLinkRecords
@@ -388,7 +419,7 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             Assert.That(actualTagLink.Tag.Value, Is.Not.Null);
             AssertThatRecordsMatch(actualTagLink.Tag.Value, SeededTagRecords[expectedTagLink.TagId]);
             Assert.That(actualTagLink.Entity.Value, Is.Not.Null);
-            AssertThatRecordsMatch(actualTagLink.Entity.Value, SeededMasterRecords[expectedTagLink.EntityId]);
+            AssertThatRecordsMatch(omitFieldsIfNeededAction(actualTagLink.Entity.Value), SeededMasterRecords[expectedTagLink.EntityId]);
         }        
     }
 

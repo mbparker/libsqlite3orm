@@ -20,7 +20,7 @@ public class TestEntityMaster
     public uint UIntValue { get; set; }
     public long LongValue { get; set; }
     public ulong? ULongValue { get; set; }
-    public Int128 Int128Value { get; set; }
+    public Int128? Int128Value { get; set; }
     public UInt128 UInt128Value { get; set; }
     public Guid? GuidValue { get; set; }
     public DateOnly? DateOnlyValue { get; set; }

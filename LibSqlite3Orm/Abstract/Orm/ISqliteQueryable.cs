@@ -13,6 +13,8 @@ public interface ISqliteQueryable<T> : ISqliteEnumerable<T>
     TValue Max<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>;
     double Average<TValue>(Expression<Func<T, TValue>> valueSelector) where TValue : INumber<TValue>;
     ISqliteQueryable<T> Where(Expression<Func<T, bool>> predicate);
+    ISqliteQueryable<T> Select<TKey>(params Expression<Func<T, TKey>>[] selectors);
+    ISqliteQueryable<T> Omit<TKey>(params Expression<Func<T, TKey>>[] selectors);
     ISqliteOrderedQueryable<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelectorExpr);
     ISqliteOrderedQueryable<T> OrderBy(Expression keySelectorExpr);
     ISqliteOrderedQueryable<T> OrderByDescending<TKey>(Expression<Func<T, TKey>> keySelectorExpr);

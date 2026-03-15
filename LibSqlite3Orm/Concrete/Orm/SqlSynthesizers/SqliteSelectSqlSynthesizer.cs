@@ -119,15 +119,106 @@ public class SqliteSelectSqlSynthesizer : SqliteDmlSqlSynthesizerBase
             }
             else
             {
-                var cols = table.Columns.Values.OrderBy(x => x.Name)
-                    .Select(x => $"{table.Name}.{x.Name} AS {table.Name}{x.Name}").ToList();
-                if (otherTablesReferenced.Any())
+                List<string> cols = [];
+                
+                if (selectArgs.Projection is not null)
                 {
-                    foreach (var otherTable in otherTablesReferenced)
+                    var selectFieldsByTable = new Dictionary<string, List<string>>();
+                    if (selectArgs.Projection.SelectFields.Count > 0)
                     {
-                        cols.AddRange(Schema.Tables[otherTable].Columns.Values.OrderBy(x => x.Name)
-                            .Select(x => $"{otherTable}.{x.Name} AS {otherTable}{x.Name}").ToList());
+                        foreach (var field in selectArgs.Projection.SelectFields)
+                        {
+                            var tableSchema = Schema.Tables.Values.SingleOrDefault(x =>
+                                x.ModelTypeName == field.DeclaringType?.AssemblyQualifiedName);
+                            if (tableSchema is not null)
+                            {
+                                if (!selectFieldsByTable.ContainsKey(tableSchema.Name))
+                                    selectFieldsByTable.Add(tableSchema.Name, []);
+                                var colSchema = tableSchema.Columns.Values.SingleOrDefault(x => x.ModelFieldName == field.Name);
+                                if (colSchema is not null)
+                                {
+                                    selectFieldsByTable[tableSchema.Name].Add(colSchema.Name);
+                                }
+                            }
+                        }
                     }
+                    else
+                    {
+                        var omitFieldsByTable = new Dictionary<string, List<string>>();
+                        if (selectArgs.Projection.OmitFields.Count > 0)
+                        {
+                            foreach (var field in selectArgs.Projection.OmitFields)
+                            {
+                                var tableSchema = Schema.Tables.Values.SingleOrDefault(x =>
+                                    x.ModelTypeName == field.DeclaringType?.AssemblyQualifiedName);
+                                if (tableSchema is not null)
+                                {
+                                    if (!omitFieldsByTable.ContainsKey(tableSchema.Name))
+                                        omitFieldsByTable.Add(tableSchema.Name, []);
+                                    var colSchema = tableSchema.Columns.Values.SingleOrDefault(x => x.ModelFieldName == field.Name);
+                                    if (colSchema is not null)
+                                    {
+                                        if (!Type.GetType(colSchema.ModelFieldTypeName).IsNullable())
+                                            throw new InvalidCastException(
+                                                $"Field {colSchema.Name} on Table {tableSchema.Name} was omitted but is not nullable.");
+                                        omitFieldsByTable[tableSchema.Name].Add(colSchema.Name);
+                                    }
+                                }
+                            }
+                        }
+
+                        bool IsFieldOmitted(string table, string field)
+                        {
+                            return omitFieldsByTable.ContainsKey(table) && omitFieldsByTable[table].Contains(field);
+                        }
+                        
+                        if (!selectFieldsByTable.ContainsKey(table.Name))
+                            selectFieldsByTable.Add(table.Name, []);
+                        selectFieldsByTable[table.Name]
+                            .AddRange(table.Columns.Values
+                                .Where(x => !IsFieldOmitted(table.Name, x.Name))
+                                .OrderBy(x => x.Name)
+                                .Select(x => x.Name));
+                        if (otherTablesReferenced.Count > 0)
+                        {
+                            foreach (var otherTable in otherTablesReferenced)
+                            {
+                                if (!selectFieldsByTable.ContainsKey(otherTable))
+                                    selectFieldsByTable.Add(otherTable, []);
+                                selectFieldsByTable[otherTable]
+                                    .AddRange(Schema.Tables[otherTable].Columns.Values
+                                        .Where(x => !IsFieldOmitted(otherTable, x.Name))
+                                        .OrderBy(x => x.Name)
+                                        .Select(x => x.Name));
+                            }
+                        }
+                    }
+
+                    var thisTableCols = selectFieldsByTable[table.Name];
+                    cols.AddRange(thisTableCols.Select(x => $"{table.Name}.{x} AS {table.Name}{x}"));
+                    if (otherTablesReferenced.Count > 0)
+                    {
+                        foreach (var otherTable in otherTablesReferenced)
+                        {
+                            if (selectFieldsByTable.ContainsKey(otherTable))
+                            {
+                                cols.AddRange(selectFieldsByTable[otherTable].Select(x => $"{otherTable}.{x} AS {otherTable}{x}"));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    cols = table.Columns.Values.OrderBy(x => x.Name)
+                        .Select(x => $"{table.Name}.{x.Name} AS {table.Name}{x.Name}").ToList();
+                    if (otherTablesReferenced.Count > 0)
+                    {
+                        foreach (var otherTable in otherTablesReferenced)
+                        {
+                            cols.AddRange(Schema.Tables[otherTable].Columns.Values.OrderBy(x => x.Name)
+                                .Select(x => $"{otherTable}.{x.Name} AS {otherTable}{x.Name}").ToList());
+                        }
+                    }                    
                 }
 
                 sb.Append($"SELECT {string.Join(", ", cols)} FROM {table.Name}");

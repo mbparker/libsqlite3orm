@@ -49,6 +49,11 @@ public static class TypeExtensions
         var realType =  Nullable.GetUnderlyingType(type) ?? type;
         return realType == type && realType.IsValueType;
     }
+    
+    public static bool IsNullable(this Type type)
+    {
+        return !type.IsValueType || (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>));
+    }    
 
     public static bool IsLazy(this Type type)
     {
