@@ -22,7 +22,8 @@ public class ODataQueryHandler : IODataQueryHandler
         entityGetter = new Lazy<IEntityGetter>(() => entityGetterFactory(context));
     }
 
-    public ODataQueryResult<TEntity> ODataQuery<TEntity>(ISqliteConnection connection, string odataQuery) where TEntity : new()
+    public ODataQueryResult<TEntity> ODataQuery<TEntity>(ISqliteConnection connection, string odataQuery,
+        Func<ISqliteQueryable<TEntity>, ISqliteQueryable<TEntity>> projectionFunc = null) where TEntity : new()
     {
         var parsedQuery = ODataQueryParser.Parse(odataQuery);
         Expression<Func<TEntity, bool>> filterExpression = null;
@@ -32,6 +33,8 @@ public class ODataQueryHandler : IODataQueryHandler
         if (parsedQuery.Count == true)
             count = entityGetter.Value.Get<TEntity>(connection, false).Count(filterExpression);
         ISqliteQueryable<TEntity> queryableData = entityGetter.Value.Get<TEntity>(connection, true);
+        if (projectionFunc is not null)
+            queryableData = projectionFunc(queryableData);
         if (filterExpression is not null)
             queryableData = queryableData.Where(filterExpression);
         ISqliteEnumerable<TEntity> enumerableData = queryableData;

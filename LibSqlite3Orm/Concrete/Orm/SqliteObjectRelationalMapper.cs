@@ -229,8 +229,9 @@ public class SqliteObjectRelationalMapper<TContext> : ISqliteObjectRelationalMap
         return EntityServices.DeleteAll<T>(Connection);
     }
 
-    public ODataQueryResult<TEntity> ODataQuery<TEntity>(string odataQuery) where TEntity : new()
+    public ODataQueryResult<TEntity> ODataQuery<TEntity>(string odataQuery,
+        Func<ISqliteQueryable<TEntity>, ISqliteQueryable<TEntity>> projectionFunc = null) where TEntity : new()
     {
-        return ODataQueryHandler.ODataQuery<TEntity>(Connection, odataQuery);
+        return ODataQueryHandler.ODataQuery<TEntity>(Connection, odataQuery, projectionFunc);
     }
 }

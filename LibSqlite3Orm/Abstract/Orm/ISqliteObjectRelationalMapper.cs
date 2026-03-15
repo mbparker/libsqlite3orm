@@ -32,6 +32,7 @@ public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TCo
     ISqliteQueryable<T> Get<T>(bool recursiveLoad = false) where T : new();
     int Delete<T>(Expression<Func<T, bool>> predicate);
     int DeleteAll<T>();
-    
-    ODataQueryResult<TEntity> ODataQuery<TEntity>(string odataQuery) where TEntity : new();
+
+    ODataQueryResult<TEntity> ODataQuery<TEntity>(string odataQuery,
+        Func<ISqliteQueryable<TEntity>, ISqliteQueryable<TEntity>> projectionFunc = null) where TEntity : new();
 }
