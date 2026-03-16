@@ -206,7 +206,67 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
             });
             AssertOptionalRecordsMatch(actual[i], expected[i]);
         }
+    }
+    
+    [Test]
+    public void Get_Count_WhenNoWhereClauseAndNoPredicate_ReturnsExpectedCount()
+    {
+        var expected = SeededMasterRecords
+            .Values
+            .Count;
+
+        var actual = Orm
+            .Get<TestEntityMaster>()
+            .Count();
+        
+        Assert.That(actual, Is.EqualTo(expected));
     }    
+    
+    [Test]
+    public void Get_Count_WhenWhereClauseAndNoPredicate_ReturnsExpectedCount()
+    {
+        var expected = SeededMasterRecords
+            .Values
+            .Where(x => x.EnumValue == TestEntityKind.Kind2)
+            .Count();
+
+        var actual = Orm
+            .Get<TestEntityMaster>()
+            .Where(x => x.EnumValue == TestEntityKind.Kind2)
+            .Count();
+        
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+    
+    [Test]
+    public void Get_Count_WhenNoWhereClauseAndPredicate_ReturnsExpectedCount()
+    {
+        var expected = SeededMasterRecords
+            .Values
+            .Count(x => x.BoolValue);
+
+        var actual = Orm
+            .Get<TestEntityMaster>()
+            .Count(x => x.BoolValue);
+        
+        Assert.That(actual, Is.EqualTo(expected));
+    }      
+    
+    [Test]
+    public void Get_Count_WhenWhereClauseAndPredicate_ReturnsExpectedCount()
+    {
+        var expected = SeededMasterRecords
+            .Values
+            .Where(x => x.EnumValue == TestEntityKind.Kind2)
+            .Count(x => x.BoolValue);
+
+        var actual = Orm
+            .Get<TestEntityMaster>()
+            .Where(x => x.EnumValue == TestEntityKind.Kind2)
+            .Count(x => x.BoolValue);
+        
+        Assert.That(actual, Is.EqualTo(expected));
+    }     
     
     [TestCase(false, TestEntityKind.Kind1)]
     [TestCase(false, TestEntityKind.Kind2)]

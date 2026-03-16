@@ -13,9 +13,9 @@
         <PackageTags>Cross Platform, ORM, .NET, Sqlite</PackageTags>
         <Company>Mathew Parker</Company>
         <Authors>Mathew Parker</Authors>
-        <Version>1.7.3</Version>
-        <AssemblyVersion>1.7.3.0</AssemblyVersion>
-        <FileVersion>1.7.3.0</FileVersion>
+        <Version>1.7.4</Version>
+        <AssemblyVersion>1.7.4.0</AssemblyVersion>
+        <FileVersion>1.7.4.0</FileVersion>
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 

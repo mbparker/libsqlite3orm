@@ -101,7 +101,7 @@ public class SqliteOrderedQueryable<T> : ISqliteQueryable<T>, ISqliteOrderedQuer
 
     public long Count(Expression<Func<T, bool>> predicate)
     {
-        Expression<Func<T, bool>> effectivePredicate = null;
+        Expression<Func<T, bool>> effectivePredicate = wherePredicate;
         if (predicate is not null)
         {
             if (wherePredicate is not null)
