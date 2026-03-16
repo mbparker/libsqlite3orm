@@ -34,5 +34,5 @@ public interface ISqliteObjectRelationalMapper<TContext> : IDisposable where TCo
     int DeleteAll<T>();
 
     ODataQueryResult<TEntity> ODataQuery<TEntity>(string odataQuery,
-        Func<ISqliteQueryable<TEntity>, ISqliteQueryable<TEntity>> projectionFunc = null) where TEntity : new();
+        Func<ISqliteQueryable<TEntity>, ISqliteQueryable<TEntity>> odataHook = null) where TEntity : new();
 }

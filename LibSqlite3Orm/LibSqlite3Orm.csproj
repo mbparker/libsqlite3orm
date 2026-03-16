@@ -8,14 +8,14 @@
         <Platforms>AnyCPU</Platforms>
         <Title>LibSqlite3Orm</Title>
         <Description>A cross platform, easy to use, Object Relational Mapper for SQLite 3</Description>
-        <Copyright>Copyright (c) 2025, Mathew Parker</Copyright>
+        <Copyright>Copyright (c) 2026, Mathew Parker</Copyright>
         <RepositoryUrl>https://github.com/mbparker/libsqlite3orm</RepositoryUrl>
         <PackageTags>Cross Platform, ORM, .NET, Sqlite</PackageTags>
         <Company>Mathew Parker</Company>
         <Authors>Mathew Parker</Authors>
-        <Version>1.7.2</Version>
-        <AssemblyVersion>1.7.2.0</AssemblyVersion>
-        <FileVersion>1.7.2.0</FileVersion>
+        <Version>1.7.3</Version>
+        <AssemblyVersion>1.7.3.0</AssemblyVersion>
+        <FileVersion>1.7.3.0</FileVersion>
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 
