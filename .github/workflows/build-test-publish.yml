@@ -95,15 +95,7 @@ jobs:
         name: LibSqlite3Orm.snupkg
         path: artifacts
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }}        
-
-    - name: Attach Artifacts to Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          artifacts/**
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }}      
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUB }}          
 
     - name: NuGet login (OIDC → temp API key)
       uses: NuGet/login@v1
