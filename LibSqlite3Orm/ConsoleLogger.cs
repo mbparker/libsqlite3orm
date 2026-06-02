@@ -1,5 +1,8 @@
 namespace LibSqlite3Orm;
 
+/// <summary>
+/// Don't use this class directly except for "main" before container availability, or after container disposal.
+/// </summary>
 public static class ConsoleLogger
 {
     private static string filename;
@@ -42,21 +45,46 @@ public static class ConsoleLogger
     
     public static void WriteLine(ConsoleColor? color, string message)
     {
+        WriteLineInternal(color, message, Console.Out);
+    }
+
+    public static void WriteError(Exception ex)
+    {
+        WriteError(ex, "Unhandled exception");    
+    }
+    
+    public static void WriteError(string s)
+    {
+        WriteLineInternal(ConsoleColor.Red, s, Console.Error);              
+    }
+    
+    public static void WriteError(Exception ex, string message)
+    {
+        WriteError($"{message}:\n{ex}");
+    }    
+    
+    private static void WriteLineInternal(ConsoleColor? color, string message, TextWriter writer)
+    {
         if (!color.HasValue)
         {
-            WriteLineInternal(message);    
+            WriteLineInternal(message, writer);    
             return;
         }
         
         var prevColor = Console.ForegroundColor;
         Console.ForegroundColor = color.Value;
-        WriteLineInternal(message);
+        WriteLineInternal(message, writer);
         Console.ForegroundColor = prevColor;
-    }
-
-    private static void WriteLineInternal(string s)
+    }    
+    
+    private static void WriteLineInternal(string s, TextWriter writer)
     {
-        Console.WriteLine(s);
+        writer.WriteLine(s);
+        WriteToLogStream(s);
+    }    
+
+    private static void WriteToLogStream(string s)
+    {
         logStreamWriter?.WriteLine($"{DateTimeOffset.Now:O}: {s}");
     }
 }

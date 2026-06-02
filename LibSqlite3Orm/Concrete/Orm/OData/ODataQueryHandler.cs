@@ -14,11 +14,13 @@ namespace LibSqlite3Orm.Concrete.Orm.OData;
 
 public class ODataQueryHandler : IODataQueryHandler
 {
+    private readonly IGenericLogger logger;
     private readonly Lazy<IEntityGetter> entityGetter;
 
-    public ODataQueryHandler(Func<ISqliteOrmDatabaseContext, IEntityGetter> entityGetterFactory,
+    public ODataQueryHandler(IGenericLogger logger, Func<ISqliteOrmDatabaseContext, IEntityGetter> entityGetterFactory,
         ISqliteOrmDatabaseContext context)
     {
+        this.logger = logger;
         entityGetter = new Lazy<IEntityGetter>(() => entityGetterFactory(context));
     }
 
@@ -91,7 +93,7 @@ public class ODataQueryHandler : IODataQueryHandler
         }
 
         var result = Expression.Lambda(memExp, param);
-        Console.WriteLine($"{result}");
+        logger.Debug($"{result}");
         return result;
     }
 
@@ -267,7 +269,7 @@ public class ODataQueryHandler : IODataQueryHandler
             return Expression.MakeMemberAccess(memExp, valueProperty);
         }
 
-        Console.WriteLine($"{memExp}");
+        logger.Debug($"{memExp}");
         return memExp;
     }
     

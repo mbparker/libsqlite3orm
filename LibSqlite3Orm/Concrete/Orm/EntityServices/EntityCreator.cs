@@ -9,16 +9,18 @@ namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
 public class EntityCreator : IEntityCreator
 {
+    private readonly IGenericLogger logger;
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
     private readonly ISqliteParameterPopulator  parameterPopulator;
     private readonly ISqliteEntityPostInsertPrimaryKeySetter primaryKeySetter;
     private readonly ISqliteOrmDatabaseContext context;
 
-    public EntityCreator(
+    public EntityCreator(IGenericLogger logger,
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
         ISqliteParameterPopulator parameterPopulator, ISqliteEntityPostInsertPrimaryKeySetter primaryKeySetter,
         ISqliteOrmDatabaseContext context)
     {
+        this.logger = logger;
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
         this.primaryKeySetter =  primaryKeySetter;
@@ -65,7 +67,7 @@ public class EntityCreator : IEntityCreator
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                logger.Error(e, "Bulk insert error");
                 transaction.Rollback();
                 throw;
             }

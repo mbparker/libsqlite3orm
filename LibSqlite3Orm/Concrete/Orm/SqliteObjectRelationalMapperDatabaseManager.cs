@@ -8,42 +8,44 @@ namespace LibSqlite3Orm.Concrete.Orm;
 public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObjectRelationalMapperDatabaseManager<TContext>
     where TContext : ISqliteOrmDatabaseContext
 {
+    private readonly IGenericLogger logger;
     private readonly ISqliteFileOperations fileOperations;
     private readonly ISqliteDbFactory dbFactory;
     private readonly Func<TContext> contextFactory;
     private ISqliteDbSchemaMigrator<TContext> migrator;
-    private TContext _context;
-    private ISqliteConnection _connection;
 
     public SqliteObjectRelationalMapperDatabaseManager(
+        IGenericLogger logger,
         Func<TContext> contextFactory,
         Func<ISqliteDbSchemaMigrator<TContext>> migratorFactory,
         ISqliteFileOperations fileOperations,
         ISqliteDbFactory dbFactory)
     {
+        this.logger = logger;
         this.fileOperations = fileOperations;
         this.dbFactory = dbFactory;
         this.contextFactory = contextFactory;
         migrator = migratorFactory();
     }
-    
-    private ISqliteConnection Connection {
+
+    private ISqliteConnection Connection
+    {
         get
         {
-            if (_connection == null)
+            if (field == null)
                 throw new InvalidOperationException("Connection not set.");
-            return _connection;
+            return field;
         }
-        set => _connection = value;
+        set;
     }
-    
+
     private TContext Context
     {
         get
         {
-            if (_context is null)
-                _context = contextFactory();
-            return _context;
+            if (field is null)
+                field = contextFactory();
+            return field;
         }
     }
 
@@ -91,7 +93,7 @@ public class SqliteObjectRelationalMapperDatabaseManager<TContext> : ISqliteObje
             {
                 var filename = Connection.Filename;
                 if (Connection.Connected) Connection.Close();
-                ConsoleLogger.WriteLine(ConsoleColor.Red, "DELETING DATABASE!!");
+                logger.Warn("DELETING DATABASE!!");
                 fileOperations.DeleteFile(filename);
             }
         }

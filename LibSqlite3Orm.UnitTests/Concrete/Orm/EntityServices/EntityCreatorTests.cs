@@ -11,6 +11,7 @@ namespace LibSqlite3Orm.UnitTests.Concrete.Orm.EntityServices;
 public class EntityCreatorTests
 {
     private EntityCreator _creator;
+    private IGenericLogger _mockLogger;
     private ISqliteConnection _mockConnection;
     private ISqliteCommand _mockCommand;
     private ISqliteParameterCollection _mockParameters;
@@ -29,6 +30,7 @@ public class EntityCreatorTests
     [SetUp]
     public void SetUp()
     {
+        _mockLogger = Substitute.For<IGenericLogger>();
         _mockConnection = Substitute.For<ISqliteConnection>();
         _mockCommand = Substitute.For<ISqliteCommand>();
         _mockParameters = Substitute.For<ISqliteParameterCollection>();
@@ -51,6 +53,7 @@ public class EntityCreatorTests
         _mockSynthesizer.Synthesize<TestEntity>(Arg.Any<SqliteDmlSqlSynthesisArgs>()).Returns(synthesisResult);
 
         _creator = new EntityCreator(
+            _mockLogger,
             _synthesizerFactory,
             _mockParameterPopulator,
             _mockPrimaryKeySetter,

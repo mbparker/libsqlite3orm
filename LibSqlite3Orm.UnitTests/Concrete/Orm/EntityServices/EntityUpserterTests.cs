@@ -12,6 +12,7 @@ namespace LibSqlite3Orm.UnitTests.Concrete.Orm.EntityServices;
 public class EntityUpserterTests
 {
     private EntityUpserter _upserter;
+    private IGenericLogger _mockLogger;
     private ISqliteConnection _mockConnection;
     private IEntityCreator _mockCreator;
     private IEntityUpdater _mockUpdater;
@@ -37,6 +38,7 @@ public class EntityUpserterTests
     [SetUp]
     public void SetUp()
     {
+        _mockLogger = Substitute.For<IGenericLogger>();
         _mockConnection = Substitute.For<ISqliteConnection>();
         _mockCreator = Substitute.For<IEntityCreator>();
         _mockUpdater = Substitute.For<IEntityUpdater>();
@@ -65,6 +67,7 @@ public class EntityUpserterTests
         _mockInsertSynthesizer.Synthesize<TestEntity>(default).ReturnsForAnyArgs(_insertSynthesisResult);
 
         _upserter = new EntityUpserter(
+            _mockLogger,
             _synthesizerFactory,
             creatorFactory,
             updaterFactory,

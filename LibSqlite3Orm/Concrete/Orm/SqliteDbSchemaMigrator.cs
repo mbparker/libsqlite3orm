@@ -12,6 +12,7 @@ namespace LibSqlite3Orm.Concrete.Orm;
 public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext> 
     where TContext : ISqliteOrmDatabaseContext
 {
+    private IGenericLogger logger;
     private readonly Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory;
     private readonly ISqliteDbFactory dbFactory;
     private readonly ISqliteFieldConversion fieldConversion;
@@ -19,11 +20,12 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
     private ISqliteObjectRelationalMapper<TContext> modelOrm;
     private ISqliteConnection _connection;
 
-    public SqliteDbSchemaMigrator(Func<ISqliteObjectRelationalMapper<SqliteOrmSchemaContext>> schemaOrmFactory,
+    public SqliteDbSchemaMigrator(IGenericLogger logger, Func<ISqliteObjectRelationalMapper<SqliteOrmSchemaContext>> schemaOrmFactory,
         Func<ISqliteObjectRelationalMapper<TContext>> modelOrmFactory,
         Func<SqliteDdlSqlSynthesisKind, SqliteDbSchema, ISqliteDdlSqlSynthesizer> ddlSqlSynthesizerFactory,
         ISqliteDbFactory dbFactory, ISqliteFieldConversion fieldConversion)
     {
+        this.logger = logger;
         this.ddlSqlSynthesizerFactory = ddlSqlSynthesizerFactory;
         this.dbFactory  = dbFactory;
         this.fieldConversion = fieldConversion;
@@ -179,7 +181,7 @@ public class SqliteDbSchemaMigrator<TContext> : ISqliteDbSchemaMigrator<TContext
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            logger.Error(ex, "Migration error");
             schemaOrm.RollbackTransaction();
             throw;
         }

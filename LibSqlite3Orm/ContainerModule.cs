@@ -21,6 +21,7 @@ public class ContainerModule : Module
 {
     protected override void Load(ContainerBuilder builder)
     {
+        builder.RegisterType<GenericConsoleLogger>().As<IGenericLogger>().SingleInstance();
         builder.RegisterType<SqliteConnection>().As<ISqliteConnection>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteTransaction>().As<ISqliteTransaction>().InstancePerDependency().ExternallyOwned();
         builder.RegisterType<SqliteCommand>().As<ISqliteCommand>().InstancePerDependency().ExternallyOwned();

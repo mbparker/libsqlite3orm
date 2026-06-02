@@ -12,6 +12,7 @@ namespace LibSqlite3Orm.UnitTests.Concrete.Orm.EntityServices;
 public class EntityUpdaterTests
 {
     private EntityUpdater _updater;
+    private IGenericLogger _mockLogger;
     private ISqliteConnection _mockConnection;
     private ISqliteCommand _mockCommand;
     private ISqliteParameterCollection _mockParameters;
@@ -31,6 +32,7 @@ public class EntityUpdaterTests
     [SetUp]
     public void SetUp()
     {
+        _mockLogger = Substitute.For<IGenericLogger>();
         _mockConnection = Substitute.For<ISqliteConnection>();
         _mockCommand = Substitute.For<ISqliteCommand>();
         _mockParameters = Substitute.For<ISqliteParameterCollection>();
@@ -56,6 +58,7 @@ public class EntityUpdaterTests
         _mockDetailCacheProvider.GetCache(default, default).ReturnsForAnyArgs(_mockDetailCache);
 
         _updater = new EntityUpdater(
+            _mockLogger,
             _synthesizerFactory,
             _mockParameterPopulator,
             _mockDetailCacheProvider,

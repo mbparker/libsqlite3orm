@@ -10,18 +10,20 @@ namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 public class EntityUpdater : IEntityUpdater
 {
     private readonly Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory;
+    private readonly IGenericLogger logger;
     private readonly ISqliteParameterPopulator  parameterPopulator;
     private readonly IEntityDetailCacheProvider _entityDetailCacheProvider;
     private readonly ISqliteOrmDatabaseContext context;
 
-    public EntityUpdater(
+    public EntityUpdater(IGenericLogger logger,
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
         ISqliteParameterPopulator  parameterPopulator, IEntityDetailCacheProvider entityDetailCacheProvider, 
         ISqliteOrmDatabaseContext context)
     {
+        this.logger = logger;
         this.dmlSqlSynthesizerFactory = dmlSqlSynthesizerFactory;
         this.parameterPopulator = parameterPopulator;
-        this._entityDetailCacheProvider = entityDetailCacheProvider;
+        _entityDetailCacheProvider = entityDetailCacheProvider;
         this.context = context;
     }
     
@@ -58,9 +60,9 @@ public class EntityUpdater : IEntityUpdater
                 transaction.Commit();
                 return cnt;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine(e.ToString());
+                logger.Error(ex, "Bulk update error");
                 transaction.Rollback();
                 throw;
             }

@@ -10,6 +10,7 @@ namespace LibSqlite3Orm.Concrete;
 public class SqliteConnection : ISqliteConnection
 {
     private static ISqliteCustomCollationRegistry collationRegistry;
+    private readonly IGenericLogger logger;
     private readonly Func<ISqliteConnection, ISqliteCommand> commandFactory;
     private readonly Func<ISqliteConnection, ISqliteTransaction> transactionFactory;
     private readonly List<ISqliteTransaction> transactionStack = new(); // Can't be an actual stack object.
@@ -19,10 +20,11 @@ public class SqliteConnection : ISqliteConnection
     private bool foreignKeysEnforced = true;
     private bool disposed;
 
-    public SqliteConnection(ISqliteCustomCollationRegistry collationRegistry, Func<ISqliteConnection,
+    public SqliteConnection(IGenericLogger logger, ISqliteCustomCollationRegistry collationRegistry, Func<ISqliteConnection,
         ISqliteCommand> commandFactory, Func<ISqliteConnection, ISqliteTransaction> transactionFactory)
     {
         SqliteConnection.collationRegistry ??= collationRegistry;
+        this.logger = logger;
         this.commandFactory = commandFactory;
         this.transactionFactory = transactionFactory;
     }
@@ -252,7 +254,7 @@ public class SqliteConnection : ISqliteConnection
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            logger.Error(ex, "Connection dispose error");
         }
     }
 

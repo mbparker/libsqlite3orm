@@ -9,19 +9,21 @@ namespace LibSqlite3Orm.Concrete.Orm.EntityServices;
 
 public class EntityUpserter : IEntityUpserter
 {
+    private readonly IGenericLogger logger;
     private readonly ISqliteDmlSqlSynthesizer insertSqlSynthesizer;
     private readonly ISqliteDmlSqlSynthesizer updateSqlSynthesizer;
     private readonly IEntityCreator entityCreator;
     private readonly IEntityUpdater entityUpdater;
     private readonly ISqliteOrmDatabaseContext context;
 
-    public EntityUpserter(
+    public EntityUpserter(IGenericLogger logger,
         Func<SqliteDmlSqlSynthesisKind, SqliteDbSchema, ISqliteDmlSqlSynthesizer> dmlSqlSynthesizerFactory,
         Func<ISqliteOrmDatabaseContext, IEntityCreator> entityCreatorFactory,
         Func<ISqliteOrmDatabaseContext, IEntityUpdater> entityUpdaterFactory,
         ISqliteOrmDatabaseContext context)
     {
         this.context = context;
+        this.logger = logger;
         insertSqlSynthesizer = dmlSqlSynthesizerFactory(SqliteDmlSqlSynthesisKind.Insert, this.context.Schema);
         updateSqlSynthesizer = dmlSqlSynthesizerFactory(SqliteDmlSqlSynthesisKind.Update, this.context.Schema);
         entityCreator = entityCreatorFactory(this.context);
@@ -63,7 +65,7 @@ public class EntityUpserter : IEntityUpserter
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                logger.Error(e, "Bulk upsert error");
                 transaction.Rollback();
                 throw;
             }
