@@ -367,6 +367,25 @@ public class GetTests : IntegrationTestSeededBase<TestDbContext>
     }
     
     [TestCaseSource(nameof(StringValuesTestCaseSource))]
+    public void Get_WhenFilterOnStringEqualsAndBothOperandsHaveToUpper_ReturnsCorrectRecordSet(bool recursiveLoad, string value)
+    {
+        Get_WhenFilterAndSortExpressions_ReturnsExpectedRecordsInCorrectOrder(recursiveLoad, SeededMasterRecords,
+            x => x.StringValue.ToUpper() == value.ToUpper(), x => x.Id, (actual, expected) =>
+            {
+                if (recursiveLoad)
+                {
+                    AssertThatTagLinkRecordsMatch(actual, expected);
+                    AssertOptionalRecordsMatch(actual, expected);
+                }
+                else
+                {
+                    Assert.That(actual.Tags.Value, Is.Null);
+                    Assert.That(actual.OptionalDetail.Value, Is.Null);
+                }
+            });        
+    }    
+    
+    [TestCaseSource(nameof(StringValuesTestCaseSource))]
     public void Get_WhenFilterOnStringEndsWithLowerButCompareValueIsUpper_ReturnsEmptyRecordSet(bool recursiveLoad, string value)
     {
         var count = 0;

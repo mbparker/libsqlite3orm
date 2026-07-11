@@ -166,7 +166,18 @@ public class SqliteWhereClauseBuilder : ExpressionVisitor, ISqliteWhereClauseBui
 			else if (NeedToParameterizeValue())
 			{
 				// Were in the middle of parameterizing - get the name, write out the param reference, and save the value.
-				var paramName = StoreParameterValueAndReturnName(currentMemberDbFieldName, c.Value);
+				var constValue = c.Value;
+				
+				// Need to handle method calls on strings
+				if (Type.GetTypeCode(valueType) == TypeCode.String && (inToLowerCall || inToUpperCall))
+				{
+					if (inToLowerCall) 
+						constValue = ((string)constValue).ToLower();
+					else
+						constValue = ((string)constValue).ToUpper();
+				}
+				
+				var paramName = StoreParameterValueAndReturnName(currentMemberDbFieldName, constValue);
 				currentMemberDbFieldName = null;
 				sqlBuilder.Append($":{paramName}");
 			}
